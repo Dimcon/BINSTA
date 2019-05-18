@@ -15,7 +15,7 @@ def datetimeFromIsoFormatString(inputString):
 	return datetime.datetime.strptime(inputString.split(".")[0], '%Y-%m-%dT%H:%M:%S')
 
 def datetimenow():
-
+	pass
 
 def query(database):
 	return db.session.query(database)
