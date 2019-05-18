@@ -1,0 +1,44 @@
+{% if posts|length > 0 %}
+		<div class="card text-light" style="background-color:#23272b">
+			<div class="card-body row justify-content-md-center">
+	{% for post in posts %}
+		<div class="col-md-6" style="margin-bottom:20px;margin-top:10px">
+	<div class="card text-white bg-dark">
+	  	<!--<img class="card-img-top" src="..." alt="Card image cap">-->
+		<div class="card-header" style="text-align: center;"><b style="
+						background: linear-gradient(-15deg, #f16581, orange);
+						background-clip: text;
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;">
+			{{ post.owner.display }}</b></div>
+	  	<div class="card-body">
+	  	  	<p class="card-text">{{ post.details }}</p>
+	  	</div>
+	  	<ul class="list-group list-group-flush text-white bg-dark">
+	  	  	<li class="list-group-item bg-dark">
+				<div style="float:left">
+					Liked by {{ post.likecount }}
+				</div>
+				<div class="" style="float:right">
+					{{ post.commentcount }} comments
+				</div>
+			</li>
+			{% for comment in post.comments %}
+				<li class="list-group-item"><b>{{ comment.owner.email }} commented:</b> {{ comment.message }}</li>
+			{% endfor %}
+	  	</ul>
+	</div>
+		</div>
+	<!--<div class="col-md-12"> </div>-->
+	{% endfor %}
+			</div>
+		</div>
+	<!--</div>-->
+	{% else %}
+	<div class="col-md-12 justify-content-md-center" style="text-align:center;">
+		<h1 style="text-align:center;
+			color:#5a5a5a">
+				I double checked.. nothing..
+		</h1>
+	</div>
+	{% endif %}

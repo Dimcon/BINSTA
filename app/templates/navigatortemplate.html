@@ -1,0 +1,873 @@
+<link rel="stylesheet" href="static/css/croppie.css" />
+		<script src="static/js/Libraries/croppie.min.js"></script>
+
+<script src='static/js/PIXIV4/pixi.min.js'></script>
+<script src='static/js/Libraries/PIXI-extra-filters.js'></script>
+<script src='static/js/Libraries/PixiTextInput.js'></script>
+<script src='static/js/Libraries/moment.min.js'></script>
+<!--<script src='static/js/Libraries/PIXI.input.js'></script>-->
+
+<script src='static/js/Widgets/ImagePostWidget.js'></script>
+<script src='static/js/Widgets/ProfileWidget.js'></script>
+<script src='static/js/Widgets/TextPostWidget.js'></script>
+<script src='static/js/Widgets/PortalWidget.js'></script>
+<script src='static/js/Widgets/FenceWidget.js'></script>
+<script src='static/js/Widgets/NetLoopWidget.js'></script>
+
+<script src='static/js/BinstLibs/Ripples.js'></script>
+<script src='static/js/BinstLibs/WidgetManager.js'></script>
+<script src='static/js/BinstLibs/NetworkLoader.js'></script>
+<script src='static/js/BinstLibs/InputHandlers.js'></script>
+<script src='static/js/BinstLibs/NLWInputHandler.js'></script>
+<script src='static/js/BinstLibs/MapFunctions.js'></script>
+<script src='static/js/BinstLibs/popupMenuManager.js'></script>
+<script src='static/js/BinstLibs/PostLinkManager.js'></script>
+<script src='static/js/BinstLibs/NetworkLooper.js'></script>
+
+<script src='static/js/BinstUI-Elements/BinstUIManager.js'></script>
+<script src='static/js/BinstUI-Elements/NewPostUI.js'></script>
+<script src='static/js/BinstUI-Elements/NavigationUI.js'></script>
+<script src='static/js/BinstUI-Elements/HistoryUI.js'></script>
+
+<script src='static/js/ControlFlows/AddProfileFlow.js'></script>
+
+<script src='static/js/NavigatorMisc.js'></script>
+
+<script src='static/js/navigatorPIXIV4.js'></script>
+<script src='static/js/BinstLibs/BVector.js'></script>
+<script src='static/js/BinstLibs/DefferredDraggable.js'></script>
+<script src='static/js/BinstLibs/PeopleManager.js'></script>
+<script src='static/js/BinstLibs/Dirt.js'></script>
+
+<script src='static/js/NetLoopWidgets/TextPostNLW.js'></script>
+<script src='static/js/NetLoopWidgets/TextContainNLW.js'></script>
+
+<script src='static/js/Libraries/EZGUI_PIXI/EZGUI.js'></script>
+<script src='static/js/EZGUI-layouts/NewPostLayout.js'></script>
+
+
+<script src='static/js/Libraries/croppiestuff.js'></script>
+<script src="static/js/socket.io/socket.io.min.js"></script>
+<script>
+    var UserPosition = [{{ usercenterpos[0] }},{{ usercenterpos[1] }}]
+    var tmpimagedat = [0,"",""]
+    var hasPlacedProfile = {{ hasplacedprofile }}
+    var UserProfilePos = []
+
+    var UserPositionHistory = []
+    var UserPositionHistoryPlace = 0
+
+
+    $(document).ready(function() {
+        setup()
+    });
+
+    function loadedload() {
+        jQuery.extend(jQuery.expr[':'], {
+          focus: "a == document.activeElement"
+        });
+        var elem = document.getElementById("CoordinateEditor");
+        elem.addEventListener("keydown", function (e) {
+            if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
+                enteredNewCoord()
+            }
+        });
+
+        UserProfilePos = "{{profilecoord.coords}}".split(";")
+        document.oncontextmenu = function() {return false;};
+        $(window).bind('mousewheel DOMMouseScroll', function(event) {
+            if(event.ctrlKey == true) {
+                event.preventDefault();
+                if(event.originalEvent.detail > 0) {
+                     console.log('Down');
+                 }else {
+                     console.log('Up');
+                 }
+            }
+        });
+
+
+        UserNeedsToPlaceProfile = {{ hasplacedprofile }}
+        UserPosition = [{{ usercenterpos[0] }},{{ usercenterpos[1] }}]
+
+        useremail = "{{ user.email }}"
+
+        setFileButtonPressListener("btnNewDP",function(e) {
+                activateCroppie(e,'cover-drop-zone',croppieinit)
+            }
+        )
+
+        setFileButtonPressListener("btnNewDP2",function(e) {
+                tmpimagedat[2] = e
+                var img;
+                var raw = new Image();
+                raw.src = e; // base64 data here
+                raw.onload = function() {
+                  img = createImage(raw.width, raw.height);
+                  img.drawingContext.drawImage(raw, 0, 0);
+                  tmpimagedat[0] = 1
+                  tmpimagedat[1] = img
+                  invalidate()
+                  //image(img, 0, 0); // draw the image, etc here
+                }
+            }
+        )
+    }
+
+    function RunAfterSetup() {
+        let posx = {{ usercenterpos[0] }}*unitsize
+        let posy = {{ usercenterpos[1] }}*unitsize
+        userNavigation.jumpgoto(new Vector(posx,posy))
+        loader.refresh({{ usercenterpos[0] }},{{ usercenterpos[1] }})
+        setInterval(PollingFunction,PollingInterval)
+        setInterval(RenderLoop,16)
+        setInterval(tickHistory,1000)
+        setInterval(networkLooper.pollForUpdatedData,networkLooper.pollInterval)
+    }
+
+
+
+    function cancelnewpost() {
+        $('#posteditor').addClass('hidden')
+        $('#baselinebuttons').removeClass('hidden')
+        tmpimagedat = [0,""]
+        invalidate()
+    }
+
+    function openPostEditor() {
+        $('#baselinebuttons').addClass('hidden')
+        $('#posteditor').removeClass('hidden')
+    }
+
+    function submitnewpost() {
+        if (tmpimagedat[0] == 1) {
+            $.post("/newuserimagepost",{
+				file: tmpimagedat[2],
+				data:$("#newposttext").val(),
+				posx:(centerScreenRelToUser.x / unitsize) - (3),
+		    	posy:(centerScreenRelToUser.y / unitsize) - (3)
+			}).done(function(fromserver) {
+			    let posx = (centerScreenRelToUser.x / unitsize) - (3)
+		        let posy = (centerScreenRelToUser.y / unitsize) - (3)
+			    dissuccess("pssst, yeah you, you did good kid. (Your image has been posted)")
+			    //addDrawable(new imagepost(true,fromserver.postid,fromserver.coordid,createVector(posx,posy)))
+			    cancelnewpost()
+			}).fail(function() {
+			    diserror("AAAAAAAHHHHHH. oops. I don't think you're on the internet.. Try again?")
+			})
+        } else {
+            $.post("/newuserpost",{
+		    	data: $("#newposttext").val(),
+		    	posx:(centerScreenRelToUser.x / unitsize) - (4),
+		    	posy:(centerScreenRelToUser.y / unitsize) - (3.5)
+		    }).done(function(fromserver) {
+		        console.log(fromserver)
+		        let posx = (centerScreenRelToUser.x / unitsize) - (4)
+		        let posy = (centerScreenRelToUser.y / unitsize) - (3.5)
+		        //addDrawable(new textpost(true,fromserver.postid,fromserver.coordid,createVector(posx,posy)))
+		    	dissuccess("Woop. Your post has solid structural integrity. We put it in your crosshairs.")
+		    	cancelnewpost()
+		    }).fail(function() {
+		        diserror("Woah okay we can't find the internet. Uhm do it again?")
+		    })
+		}
+    }
+
+    function canceldetails() {
+        $('#profileeditor').addClass('hidden')
+        $('#baselinebuttons').removeClass('hidden')
+    }
+
+    function openDetailEditor() {
+        $('#baselinebuttons').addClass('hidden')
+        $('#profileeditor').removeClass('hidden')
+    }
+
+    function openPortalmaker() {
+        $('#baselinebuttons').addClass('hidden')
+        $('#portaleditor').removeClass('hidden')
+        newportaldetails = [true]
+        invalidate()
+    }
+
+    function cancelPortalMaker() {
+        $('#portaleditor').addClass('hidden')
+        $('#baselinebuttons').removeClass('hidden')
+        $('#newportalpress1').html("O <==")
+        newportaldetails = []
+        invalidate()
+    }
+    function portal1press() {
+        newportaldetails.push(getMapTarget())
+        $('#newportalpress1').addClass('btn-outline-success')
+        $('#newportalpress1').removeClass('btn-outline-primary')
+        $('#newportalpress1').html("==> O")
+        if (newportaldetails.length >= 3) {
+            createPortal()
+        }
+        invalidate()
+    }
+
+    function createPortal() {
+        $.post("/newuserportal",{
+			data: "data",
+			pos1x:newportaldetails[1].x,
+			pos1y:newportaldetails[1].y,
+			pos2x:newportaldetails[2].x,
+			pos2y:newportaldetails[2].y
+		}).done(function(fromserver) {
+		    console.log(fromserver)
+		    let newvector1 = newportaldetails[1]
+			addDrawable(new portal(newvector1,true,fromserver.portal1id,fromserver.coord1id,
+			    createVector(parseFloat(newportaldetails[2].x),parseFloat(newportaldetails[2].y)),
+			    createVector(parseFloat(0),parseFloat(0)),
+			    false))
+			let newvector2 = newportaldetails[2]
+			addDrawable(new portal(newvector2,true,fromserver.portal2id,fromserver.coord2id,
+			    createVector(parseFloat(newportaldetails[1].x),parseFloat(newportaldetails[1].y)),
+			    createVector(parseFloat(0),parseFloat(0)),
+			    false))
+			dissuccess("Mhmmm. It looks like the rift has been opened! NOW WE CAN TRAVEL")
+			cancelPortalMaker()
+		}).fail(function() {
+		    diserror("Woah okay we can't find the internet. Uhm do it again?")
+		})
+    }
+
+    function fence1press() {
+        let vPosition = getMapTarget()
+        $.post("/newuserfence",{
+			data: "data",
+			pos1x:vPosition.x,
+			pos1y:vPosition.y
+		}).done(function(fromserver) {
+		    console.log(fromserver)
+		    let newvector1 = newportaldetails[1]
+			addDrawable(new fence(true,fromserver.coord1id,
+			    createVector(parseFloat(vPosition.x) - (25/2),parseFloat(vPosition.y) - (25/2)),
+			    25,"{{ g.user.email }}"))
+			cancelfenceMaker()
+			dissuccess("YOU USED 'STEP OFF', IT WAS HIGHLY EFFECTIVE")
+		}).fail(function() {
+		    diserror("Woah okay we can't find the internet. Uhm do it again?")
+		})
+        invalidate()
+    }
+
+    function openFencemaker() {
+        $('#baselinebuttons').addClass('hidden')
+        $('#fenceeditor').removeClass('hidden')
+        creatingFenceStatus = 1
+        //newportaldetails = [true]
+        invalidate()
+    }
+
+    function cancelfenceMaker() {
+        $('#fenceeditor').addClass('hidden')
+        $('#baselinebuttons').removeClass('hidden')
+        creatingFenceStatus = 0
+        //newportaldetails = []
+        invalidate()
+    }
+
+    function submitdetails() {
+        let useremail = "{{ user.email }}"
+        $.post("/updateprofile",{
+			bio: $("#userbio").val(),
+			username: $("#username").val()
+		}).done(function(fromserver) {
+		    console.log(fromserver)
+			dissuccess("You've successfully upgraded your details.")
+			updateDetails(useremail)
+			canceldetails()
+		}).fail(function() {
+		    diserror("Woah okay we can't find the internet. Uhm do it again?")
+		})
+    }
+	//# sourceURL=Navigatortemplate.js
+</script>
+
+
+<style>
+
+    .slidecontainer {
+    width: 100%;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    border-radius: 5px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #505050;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #505050;
+    cursor: pointer;
+}
+
+body { background-color: #000000; }
+      canvas { background-color: #222222; }
+</style>
+
+<div align="center">
+    <canvas id="binst-canvas" style="width:100vw;height:100vh" width="100vw" height="100vh"></canvas>
+  </div>
+
+<div id="textinput1"
+style="
+position:absolute;
+left:calc(50vw - 20vw);
+top:calc(50vh - 20vw);
+width:calc(20vw * 2);
+height:calc(20vw * 2);
+" class="hidden">
+    <div class="card bg-dark text-light w-100 h-100">
+        <div class="row">
+        </div>
+    </div>
+</div>
+
+<div id="posteditor"
+style="
+position:absolute;
+bottom:2rem;
+height:calc(12rem);
+" class="row col-md-5 d-flex w-100 justify-content-center hidden">
+    <div class="card bg-dark text-light w-100 h-100">
+        <div class="row mt-2 p-1 d-flex w-100 justify-content-center">
+            <h3>Create new Post</h3>
+        </div>
+        <div class="row mt-2 mb-2 ml-5 mr-2 p-1 d-flex justify-content-between" >
+            <div class="col-10">
+                <textarea id="newposttext" class="col form-control form-control-sm" style="height:3rem"></textarea>
+            </div>
+            <div class="col">
+                <div id="fileselectorwrapper2" class="btn w-100 btn-sm btn-outline-primary" style="position: relative;overflow: hidden;direction: ltr;">
+			    	<div><i class="far fa-image fa-lg"></i></div>
+			        <input id="btnNewDP2" style="position: absolute;right: 0px;top: 0px;font-family: Arial;font-size: 118px;margin: 0px;padding: 0px;cursor: pointer;opacity: 0;height: 100%;" class="btn btn-outline-light" type="file"/>
+			    </div>
+            </div>
+        </div>
+        <div class="row m-2 p-1 d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" onclick="javascript:cancelnewpost()">Cancel</button>
+            <button class="btn btn-outline-success pl-5 pr-5" onclick="javascript:submitnewpost()">Create</button>
+        </div>
+    </div>
+</div>
+
+<div id="portaleditor"
+style="
+position:absolute;
+bottom:2rem;
+height:calc(8rem);
+" class="row col-md-4 d-flex w-100 justify-content-center hidden">
+    <div class="card bg-dark text-light w-100 h-100">
+        <div class="row m-2 p-1 d-flex w-100 justify-content-center">
+            <h3>Open a rift in space</h3>
+        </div>
+        <div class="row m-2 p-1 d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" onclick="javascript:cancelPortalMaker()">Cancel</button>
+            <button id="newportalpress1" class="btn btn-outline-primary pl-5 pr-5" onclick="javascript:portal1press()">O <==</button>
+        </div>
+    </div>
+</div>
+
+<div id="fenceeditor"
+style="
+position:absolute;
+bottom:2rem;
+height:calc(10rem);
+" class="row col-md-6 d-flex w-100 justify-content-center hidden">
+    <div class="card bg-dark text-light w-100 h-100">
+        <div class="row m-2 p-1 d-flex w-100 justify-content-center">
+            <h3>Fence off a little slice of life for yourself! </h3>
+            <small>And those you accept to join you</small>
+        </div>
+        <div class="row m-2 p-1 d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" onclick="javascript:cancelfenceMaker()">Cancel</button>
+            <button id="newfencepress1" class="btn btn-outline-primary pl-5 pr-5" onclick="javascript:fence1press()">|||</button>
+        </div>
+    </div>
+</div>
+
+<div id="profileeditor"
+style="
+position:absolute;
+bottom:2rem;
+height:calc(30rem);
+" class="row col-md-6 d-flex w-100 justify-content-center hidden" style="overflow-y:scroll">
+    <div class="card bg-dark text-light w-100 h-100" >
+        <div class="row m-2 p-1 d-flex w-100 justify-content-center">
+            <h3>Update user details</h3>
+        </div>
+        <div class="row m-2 p-1" >
+            <div  class="col-lg-4">
+					<div id="cover-drop-zonecover"style="height:100%">
+					  <img id="cover-drop-zone" class="image-drop-zone" type="file" src="/getimageid-{{ user.profileid }}"
+		                style="width:100%;max-width:20vh"class="img-circle" alt={% if isme %}"Just drag a picture here and it automatically becomes the face of {{ user.name }}"{% else %}""{% endif %}>
+					</div>
+						<h5 style="display:block">
+                <label>&nbsp &nbsp &nbsp </label></h5>
+				  </div>
+            <div class="col-md-7">
+			    <input id="username" type="text" style="font-size:2rem" class="form-control display-4" value="{{ user.name }}">
+			    <p class="lead"><b style="
+						background: linear-gradient(-15deg, #f16581, orange);
+						background-clip: text;
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;">{{ user.email }}</b></p>
+						<div id="fileselectorwrapper" class="btn btn-sm btn-outline-secondary" style="position: relative;overflow: hidden;direction: ltr;">
+							<div>Select New Profile Image</div>
+						<input id="btnNewDP" style="position: absolute;right: 0px;top: 0px;font-family: Arial;font-size: 118px;margin: 0px;padding: 0px;cursor: pointer;opacity: 0;height: 100%;" class="btn btn-outline-light" type="file"/>
+						</div>
+					  <button  onclick="javascript:croppieacceptClick()" id="btnAccept" class="hidden ml-1 mt-1 btn btn-sm btn-outline-primary">
+							Accept
+						</button>
+					  <button  onclick="javascript:croppierotateClick()" id="btnRotate" class="hidden ml-1 mt-1 btn btn-sm btn-outline-light">
+							Rotate
+						</button>
+					  <button  onclick="javascript:croppiecancelClick()" id="btnCancel" class="hidden ml-1 mt-1 btn btn-sm btn-outline-warning">
+							Cancel
+						</button>
+				  </div>
+            <div class="col-md-12">
+                <p class="lead"><b style="
+						background: linear-gradient(-15deg, #f16581, orange);
+						background-clip: text;
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;">Bio</b></p>
+            </div>
+            <textarea id="userbio" class="form-control form-control-sm">{{ user.bio }}</textarea>
+        </div>
+        <div class="row m-2 p-1 d-flex justify-content-between">
+            <button class="btn btn-outline-secondary" onclick="javascript:canceldetails()">Cancel</button>
+            <button class="btn btn-outline-success pl-5 pr-5" onclick="javascript:submitdetails()">Update</button>
+        </div>
+    </div>
+</div>
+
+
+
+<style>
+.uibtn {
+    border-radius:10vw;
+    background:#383838;
+    color:#aaaaaa;
+}
+
+.statusbtn {
+    border-radius:10vw;
+    background:#38383855;
+    color:#aaaaaa;
+}
+
+.disconnected {
+    background:#ff000055;
+}
+
+
+</style>
+<div id="baselinebuttons"
+     style="
+position:absolute;
+bottom:0rem;
+width:100vw;
+height:calc(4rem);
+background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
+     class="row d-flex justify-content-center">
+<div class="col-md-6 pb-3 pt-1">
+    <div class="row text-light w-100 h-100 d-flex justify-content-center">
+
+        <div class=" pl-2 pr-2 d-flex justify-content-between">
+            <button id="backbutton" class="btn uibtn" onclick="javascript:GoBackOneStep()"><i class="fas fa-undo"></i></button>
+        </div>
+        <div class=" pl-2 pr-2 d-flex justify-content-between">
+            <button class="btn uibtn" onclick="javascript:userNavigation.gotoprofile()"><i class="fas fa-home"></i></button>
+        </div>
+        <div class="pl-2 pr-2 d-flex justify-content-between">
+            <input id="CoordinateEditor" onblur="enteredNewCoord();" class="form-control btn btn-outline-light" style="font-size:20px;width:12rem;color:#ff8100;" value="::">
+        </div>
+        <div class="pl-2 pr-2 d-flex justify-content-between">
+            <button type="button" id="statusbtn" class="btn statusbtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Connection status"><i class="fas fa-satellite"></i></button>
+        </div>
+        <div class="pl-2 pr-2 d-flex justify-content-between">
+            <button onclick="javascript:newPostClick()" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></i></button>
+        </div>
+
+        <div class="col-md-5 align-content-center">
+            <input id="zoomslider" oninput="javascript:userNavigation.jumpzoomto(1 + (($('#zoomslider').val() /100) * (100 - 1)))" type="range" min="0" max="100" class="slider">
+        </div>
+
+
+        <!--<div class="btn-group dropup">-->
+            <!--<button type="button" id="btnnewstuff" class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown">-->
+                <!--<i class="far fa-plus-square"></i>-->
+            <!--</button>-->
+            <!--<div class="dropdown-menu dropdown-menu-right bg-dark">-->
+                <!--<a class="dropdown-item text-light" onclick="javscript:openPostEditor()" href="#">Mkpost</a>-->
+                <!--<a class="dropdown-item text-light" onclick="javscript:openPortalmaker()" href="#">Rift</a>-->
+                <!--<a class="dropdown-item text-light" onclick="javscript:openFencemaker()" href="#">Fence</a>-->
+            <!--</div>-->
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<script>
+
+    function newPostClick() {
+        let posx = vecScreen.x/5 * 2;
+         let posy = vecScreen.y/3;
+         let newvec = new Vector(0,0)
+         newvec.x = ((Uservector.x + (posx)) / unitsize)
+         newvec.y = ((Uservector.y + (posy)) / unitsize)
+         binstuimanager.uicomponents["newpostui"].showAtPosition(newvec,"none")
+         invalidate()
+    }
+
+    function isInt(value) {
+      return !isNaN(value) &&
+             parseInt(Number(value)) == value &&
+             !isNaN(parseInt(value, 10));
+    }
+
+    function enteredNewCoord() {
+        coordstring = $('#CoordinateEditor').val()
+        let iscoords = false
+        let coord1 = 0
+        let coord2 = 0
+        if (coordstring.indexOf(':') > -1) {
+            coords = coordstring.split(':')
+            if (coords.length > 0) {
+
+                if (coords.length == 2) {
+                    coord1 = coords[0]
+                    coord2 = coords[1]
+                } else if (coords.length == 3) {
+                    coord1 = coords[0]
+                    coord2 = coords[2]
+                }
+
+                if (isInt(coord1) && isInt(coord2)) {
+                    iscoords = true
+                }
+            }
+        }
+        if (!iscoords) {
+            alert("Please use the format XXX::YYY")
+        } else {
+            userNavigation.goto(new Vector(coord1*unitsize,coord2*unitsize))
+        }
+    }
+
+    var historyitems = {}
+    var historyCounter = 0
+
+    //for(let counter = 0;counter < 100;counter += 1) {
+    //    addHistoryItem(new Vector(100,200))
+    //}
+    function openFeed() {
+        $('#Updates').removeClass('updates-closed')
+        $('#Updates').addClass('updates-open')
+    }
+
+    function closeFeed() {
+        $('#Updates').removeClass('updates-open')
+        $('#Updates').addClass('updates-closed')
+    }
+    var feedOpenCounter = 60
+
+    function tickHistory() {
+        //if (!$('#Updatelist').is(":focus")) {
+        //    if (feedOpenCounter <= 0) {
+        //        closeFeed()
+        //    } else {
+        //         feedOpenCounter -= 1
+        //    }
+        //} else {
+        //    feedOpenCounter = 60
+        //    openFeed()
+        //}
+        for (let items in historyitems) {
+            let hist = historyitems[items]
+            let time = hist[2];
+            let itemid = hist[0]
+
+            let min15 = 1000 * 60 * 15;
+            let min15ago = new Date() - min15;
+
+            let timename = "historytime" + itemid
+            let timestr = moment(time).fromNow();
+            $('#' + timename).html(timestr)
+            if (time < min15ago) {
+                $('#history' + itemid).remove()
+                delete historyitems[itemid]
+            }
+        }
+        for (let items in feeditems) {
+            let hist = feeditems[items]
+            let time = hist[2];
+            let itemid = hist[0]
+
+            let min15 = 1000 * 60 * 15;
+            let min15ago = new Date() - min15;
+
+            let timename = "feeditem" + itemid
+            let timestr = moment(time).fromNow();
+            $('#' + timename).html(timestr)
+            //if (time < min15ago) {
+            //    $('#history' + itemid).remove()
+            //    delete historyitems[itemid]
+            //}
+        }
+            //console.log("ticked history")
+    }
+
+    function AddPositionToHistory() {
+        let position2 = new Vector(
+                        (Uservector.x + (vecScreen.x/2))/unitsize ,
+                        (Uservector.y + (vecScreen.y/2))/unitsize
+                    )
+        UserPositionHistory.unshift(position2)
+        addHistoryItem(position2)
+    }
+
+    function GoBackOneStep() {
+        userNavigation.gobackto(new Vector(UserPositionHistory[UserPositionHistoryPlace].x*unitsize,UserPositionHistory[UserPositionHistoryPlace].y*unitsize))
+        UserPositionHistoryPlace += 2
+        if (UserPositionHistoryPlace >= UserPositionHistory.length) {
+            $('#backbutton').prop('disabled', true);
+            UserPositionHistoryPlace = 0
+        }
+    }
+
+    function ResetBackButton() {
+        $('#backbutton').prop('disabled', false);
+        UserPositionHistoryPlace = 0
+    }
+    function GoForwardOneStep() {
+        UserPositionHistoryPlace -= 1
+        userNavigation.goto(new Vector(UserPositionHistory[UserPositionHistoryPlace].x*unitsize,UserPositionHistory[UserPositionHistoryPlace].y*unitsize))
+    }
+
+    function addHistoryItem(coord) {
+        historyCounter += 1
+        let today = new Date();
+        let msg = parseInt(coord.x) + "::" + parseInt(coord.y)
+        let itemid = historyCounter
+        let newitem = [itemid,coord,today,msg]
+        historyitems[itemid] = newitem
+
+        newhtml = '<button \
+                \
+                id="history' + itemid + '" \
+                onclick="javascript:userNavigation.goto(new Vector(' + coord.x + '*unitsize,' + coord.y + '*unitsize))" \
+                style="border: 0px solid rgba(111, 111, 111, 0.42);border-right: 0;border-left: 0;background:#00000000" \
+                class="row list-group-item list-group-item-ligh list-group-item-action w-100 d-flex pt-0 pb-2"> \
+                <div class="pb-0 pt-0 mt-0 mb-0">\
+                    <div class="text-left" id="historymsg' + itemid + '" style="color: #ff8100;">' + msg + '</div>\
+                </div>\
+                <small class="badge pl-3" id="historytime' + itemid + '">a few seconds ago</small>\
+            </button>'
+        $('#historylist').prepend(newhtml)
+    }
+
+    //# sourceURL=Navigatortemplate2.js
+
+</script>
+
+<style>
+.LocationHistory {
+    -ms-overflow-style: none;  // IE 10+
+    overflow: -moz-scrollbars-none;  // Firefox
+}
+.LocationHistory::-webkit-scrollbar {
+    display: none;  // Safari and Chrome
+}
+.scrollbar {
+    background-color: #F5F5F5;
+    float: left;
+    height: 300px;
+    margin-bottom: 25px;
+    margin-left: 22px;
+    margin-top: 40px;
+    width: 65px;
+    overflow-y: scroll;
+}
+
+#LocationHistory::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F500;
+}
+
+#LocationHistory::-webkit-scrollbar-thumb {
+    background-color: #383838;
+}
+
+#Updatelistholder::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F500;
+}
+
+#Updatelistholder::-webkit-scrollbar-thumb {
+    background-color: #383838;
+}
+
+.updates-open {
+    width:calc(15rem);
+    transition: 0.3s;
+}
+
+.updates-open:hover {
+    width:calc(30rem);
+    transition: 0.3s;
+}
+</style>
+
+<div id="LocationHistory"
+     style="position:absolute;
+    left:0;
+    bottom:0;
+    background-image: linear-gradient(to right, #000000ff , #000000aa, #00000000);
+    max-height:30vh;
+    overflow-y:scroll"
+     class="pl-1 pr-1 text-light style-1 hidden"
+>
+    <div class="col-md-12 text-left pt-2 pb-2">History</div>
+        <div id="historylist" class="list-group list-group-flush" style="">
+            <!--<button style="background:#000000aa" class="list-group-item-light list-group-item list-group-item-action w-100">-->
+                <!--<div style="color: #4e8e59;">2572::3564</div>-->
+                <!--<small>1s ago</small>-->
+            <!--</button>-->
+            <!--<button style="background:#000000aa" class="list-group-item-light list-group-item list-group-item-action w-100 ">-->
+                <!--<div style="color: #4e8e59;">2572::3564</div>-->
+                <!--<small>1s ago</small>-->
+            <!--</button>-->
+            <!--<button style="background:#000000aa" class="list-group-item-light list-group-item list-group-item-action dw-100">-->
+                <!--<div style="color: #4e8e59;">257200::356400</div>-->
+                <!--<small>1s ago</small>-->
+            <!--</button>-->
+        </div>
+    </div>
+
+
+<script>
+
+    var feeditemcounter = 0
+    var feeditems = {}
+
+    function newFeedUpdates(feedUpdates) {
+        let hasnewitem = false
+        for (let i = 0; i < feedUpdates.length;i++) {
+            let update = feedUpdates[i]
+            feeditemcounter += 1
+            let timestarted = update.time
+            if (!(timestarted in feeditems)) {
+                hasnewitem = true
+                let html = ""
+                if (update.updateImageid > 0) {
+                    html = '\
+                        <button id="feedpost' + feeditemcounter + '"\
+                        onclick="javascript:userNavigation.goto(new Vector(' +  (update.posx + 6) + '*unitsize,' +  (update.posy + 6) + '*unitsize))"\
+                        style="background:#00000000; border-bottom:1px solid #ffffff77" class="p-1 list-group-item-light list-group-item list-group-item-action w-100">\
+                            <div class="row pl-2 pt-2 pr-2 pb-0 mb-0 d-flex align-content-center">\
+                                <img class="" style="width:2.5rem;height:2.5rem" src="getimageid-'+ update.relUserImageID +'">\
+                                <div class="col-md pr-1">\
+                                    <span style="white-space: normal;" class="row badge badge-dark">' + update.relUserName + ' </span><span>&nbsp ' + update.action + '</span>\
+                                    <div class="row d-flex w-100 justify-content-between">\
+                                        <div>\
+                                            <span>&nbspat&nbsp</span>\
+                                            <span style="color: #ff8100;">' + Math.round(update.posx) + '::' + Math.round(update.posy) + '</span>\
+                                        </div>\
+                                        <small id="feeditem' + feeditemcounter + '">\
+                                            \
+                                        </small>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                            <div class="row d-flex justify-content-center">\
+                            <div class="ml-2 mr-2 mb-2 mt-0 p-2 mt-0 d-flex justify-content-center" style="background:#282828;border-radius:5px">\
+                                <img class="" style="width:auto;max-height:10rem" src="getimageid-'+ update.updateImageid +'">\
+                            </div>\
+                            </div>\
+                        </button>\
+                        '
+                } else {
+                    html = '<button id="feedpost' + feeditemcounter + '" \
+                                onclick="javascript:userNavigation.goto(new Vector(' +  (update.posx + 6) + '*unitsize,' +  (update.posy + 6) + '*unitsize))"\
+                                style="background:#00000000; border-bottom:1px solid #ffffff77" class="p-1 list-group-item-light list-group-item list-group-item-action w-100">\
+                                <div class="row pl-2 pt-2 pr-2 pb-0 mb-0 d-flex align-content-center">\
+                                    <img class="" style="width:2.5rem;height:2.5rem" src="getimageid-'+ update.relUserImageID +'">\
+                                        <div class="col-md pr-1">\
+                                        <span style="white-space: normal;" class="badge badge-dark">' + update.relUserName + ' </span><span>&nbsp ' + update.action + '</span>\
+                                        <div class="d-flex w-100 justify-content-between">\
+                                            <div>\
+                                                <span>&nbspat&nbsp</span>\
+                                                <span style="color: #ff8100;">' + Math.round(update.posx) + '::' + Math.round(update.posy) + '</span>\
+                                            </div>\
+                                            <small id="feeditem' + feeditemcounter + '">\
+                                                \
+                                            </small>\
+                                        </div>\
+                                    </div>\
+                                </div>\
+                                <div class="row d-flex justify-content-center">\
+                                <div class="ml-2 mr-2 mb-2 mt-0 p-2 mt-0 d-flex justify-content-center" style="background:#282828;border-radius:5px">\
+                                    ' + update.message + '\
+                                </div>\
+                                </div>\
+                            </button>'
+                }
+                let item = [feeditemcounter,html,timestarted]
+                feeditems[timestarted] = item
+                $('#Updatelist').prepend(html)
+                //$("#feedpost" + feeditemcounter)[0].scrollIntoView();
+            }
+        }
+        if (hasnewitem) {
+            //feedOpenCounter = 5
+            //openFeed()
+
+        }
+    }
+</script>
+<div id="Updates"
+     style="position:absolute;
+    right:0;
+    bottom:0;
+    border-radius:10px;
+    background-image: linear-gradient(to left, #000000ff ,#000000ff,#000000ff,#050505cc, #22222277);"
+     class="updates-open pl-1 pr-1 text-light"
+>
+    <div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">Updates</div>
+    <div id="Updatelistholder" class="ml-2 mr-2" style="max-height:80vh;overflow-y:scroll;">
+        <div id="Updatelist" class="list-group text-light" >
+        </div>
+    </div>
+</div>
+

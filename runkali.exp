@@ -1,0 +1,9 @@
+#!/usr/bin/expect
+
+spawn rsync -r  ./app ./app.cgi ./app.py ./db_ops ./db_repository ./installLMS.sh ./kill.sh ./LMS ./lmsapp.db ./LMSDef ./packages.config ./peopledev.com.conf ./populatedatabase.py ./README-Start-Here.txt ./README.txt ./requirements.txt ./udb.sh root@10.0.0.100:/var/www/html
+
+expect "password:"
+
+send toor\n;
+
+interact

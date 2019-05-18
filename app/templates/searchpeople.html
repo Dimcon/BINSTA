@@ -1,0 +1,77 @@
+
+
+<script>
+	function friendpress(id) {
+		if ($('#friendbtn' + id).hasClass('btn-outline-secondary')) {
+			breakfriend(id,whendone)
+		} else {
+			makefriend(id,whendone)
+		}
+	}
+
+	function whendone(fromserver) {
+		if (fromserver.friends == 't') {
+			friends = true;
+			$('#friendbtn' + fromserver.id).html('Unriend')
+			$('#friendbtn' + fromserver.id).addClass('btn-outline-secondary')
+			$('#friendbtn' + fromserver.id).removeClass('btn-outline-primary')
+			success("You are now friends with " + fromserver.email)
+		} else {
+			friends = false
+			$('#friendbtn' + fromserver.id).html('Add Friend')
+			$('#friendbtn' + fromserver.id).removeClass('btn-outline-secondary')
+			$('#friendbtn' + fromserver.id).addClass('btn-outline-primary')
+			disflash("You are no longer friends with " + fromserver.email)
+		}
+	}
+	//# sourceURL=searchpeople.html
+</script>
+
+{% if people|length > 0 %}
+		<div class="card text-light" style="background-color:#23272b">
+			<div class="card-body row justify-content-md-center">
+	{% for bob in people %}
+		<div class="col-md-6" style="margin-bottom:20px;margin-top:10px">
+	<div class="card text-white bg-dark">
+	  	<!--<img class="card-img-top" src="..." alt="Card image cap">-->
+		<div class="card-header" style="text-align: center;"><b style="
+						background: linear-gradient(-15deg, #f16581, orange);
+						background-clip: text;
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;">
+			{{ bob.display }}</b></div>
+		<!--<div class="card-body"></div>-->
+			<ul class="list-group list-group-flush text-white bg-dark">
+		<li class="list-group-item bg-dark">
+	  	  	<div class="card-text" style="float:left; text-align:left">{{ bob.email }}</div>
+			<button style="float:right" onclick="javascript:friendpress('{{ bob.id }}')" id="friendbtn{{ bob.id }}"
+					class="ml-2 btn btn-sm
+					{% if bob.isfriends %}btn-outline-secondary{% else %}btn-outline-primary{% endif %}
+					">
+				{% if bob.isfriends %}Unfriend{% else %}Add Friend{% endif %}
+			</button>
+	  	</li>
+
+	  	  	<li class="list-group-item bg-dark">
+				<div style="float:left">
+					0 Mutual friends
+				</div>
+				<div class="" style="float:right">
+				</div>
+			</li>
+	  	</ul>
+	</div>
+		</div>
+	<!--<div class="col-md-12"> </div>-->
+	{% endfor %}
+			</div>
+		</div>
+	<!--</div>-->
+	{% else %}
+	<div class="col-md-12 justify-content-md-center" style="text-align:center;">
+		<h1 style="text-align:center;
+			color:#5a5a5a">
+				I double checked.. nothing..
+		</h1>
+	</div>
+	{% endif %}

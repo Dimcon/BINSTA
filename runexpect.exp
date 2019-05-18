@@ -1,0 +1,9 @@
+#!/usr/bin/expect
+
+spawn rsync -r  ./app ./app.cgi ./app.py ./config.py ./db_ops ./db_repository ./installLMS.sh ./kill.sh ./LMS ./lmsapp.db ./LMSDef ./makefile ./packages.config ./peopledev.com.conf ./populatedatabase.py ./README-Start-Here.txt ./README.txt ./requirements.txt ./udb.sh daimon@10.0.0.101:/var/www/peopledev.com/public_html
+
+expect "password:"
+
+send dogsrundeep\n;
+
+interact

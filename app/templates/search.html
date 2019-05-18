@@ -1,0 +1,62 @@
+
+<script>
+	$(document).ready(function() {
+		var msgs = []
+		{% with messages = get_flashed_messages() %}
+				{% for message in messages %}
+						loadedmsgs.push('{{ message }}')
+				{% endfor %}
+		{% endwith %}
+	})
+
+	function loadedload() {
+		if (showing == 1) {
+			showposts()
+		} else if (showing = 2) {
+			showpeople()
+		}
+	}
+	function search(term) {
+
+	}
+	defaultterm = "{{ defaultterm }}"
+	showing = 2;
+	function showposts() {
+		showing = 1
+		$('#searchdisplay').load('/searchposts')
+		$('#posts').addClass('active')
+		$('#people').removeClass('active')
+	}
+	function showpeople() {
+		showing = 2
+		$('#searchdisplay').load('/searchpeople')
+		$('#posts').removeClass('active')
+		$('#people').addClass('active')
+	}
+</script>
+<div class="col-md-12 row justify-content-md-center">
+	<div class="col-md-8" style="text-align:center">
+		<div class="col-md-12" style="text-align:center">
+			<h1 style="text-align:center;
+				color:#5a5a5a">
+				Search: <b id="searchterm">{{ defaultterm }}</b>
+			</h1>
+		</div>
+		<nav class="navbar navbar-expand-lg navbar-dark text-light bg-dark" style="width:100%">
+		    <ul class="navbar-nav ml-auto mr-auto">
+		      <li id="posts" class="nav-item active">
+				  	<a class="nav-link" onclick="javascript:showposts()" href="#">Posts: <b>{{ postcount }}</b></a>
+		      </li>
+		      <li id="people" class="nav-item">
+				  	<a class="nav-link" onclick="javascript:showpeople()" href="#">People: <b>{{ peoplecount }}</b></a>
+		      </li>
+		    </ul>
+		</nav>
+
+		<div class="">
+			<div id="searchdisplay">
+
+			</div>
+		</div>
+	</div>
+</div>

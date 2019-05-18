@@ -1,0 +1,328 @@
+		<!-- add to document <head> -->
+		<link href="static/css/filepond.css" rel="stylesheet">
+		<!-- add before </body> -->
+		<script src="static/js/filepond.js"></script>
+
+		<link rel="stylesheet" href="static/css/croppie.css" />
+		<script src="static/js/croppie.min.js"></script>
+
+
+<script>
+	function loadedload() {
+		<!--const inputElement = document.querySelector('input[type="file"]');-->
+		<!--const pond = FilePond.create( inputElement );-->
+		<!--$('#cover-drop-zone').croppie();-->
+		setDropZoneListeners()
+		$("#btnNewDP").on('change',changeProfileClick)
+	}
+
+	{% if isme %}{% else %}
+	friends = {% if isfriends %}true{% else %}false{% endif %}
+
+	function friendpress() {
+		uemail = "{{ user.id }}"
+		uchange = "befriend"
+		if (friends) {
+			breakfriend(uemail,whendone)
+		} else {
+			makefriend(uemail,whendone)
+		}
+	}
+
+	function whendone(fromserver) {
+		if (fromserver.friends == 't') {
+			friends = true;
+			$('#friendbtn').html('Unriend')
+			$('#friendbtn').addClass('btn-outline-secondary')
+			$('#friendbtn').removeClass('btn-outline-primary')
+			success("You are now friends with " + fromserver.email)
+		} else {
+			friends = false
+			$('#friendbtn').html('Add Friend')
+			$('#friendbtn').removeClass('btn-outline-secondary')
+			$('#friendbtn').addClass('btn-outline-primary')
+			disflash("You are no longer friends with " + fromserver.email)
+		}
+	}
+	{% endif %}
+
+	function acceptClick() {
+		opts = {
+			type : 'base64',
+			size : 'original',
+			format : 'jpeg',
+			quality : '1',
+			circle : false
+		}
+		img = croppieimage.result(opts).then(function(blob) {
+		    cancelClick()
+			$('#cover-drop-zone').attr("src",blob)
+			//uploadfiledata(blob, '/updateprofileimage')
+			$.post("/updateprofileimage",{
+				file: blob,
+				moredata:'data'
+			}).done(function(fromserver) {
+			}).fail(function() {
+			})
+		})
+
+	}
+
+	function uploadfiledata(fileblob, myurl) {
+		var data = new FormData();
+		files = []
+		files.push(fileblob)
+    	$.each(files, function(key, value)
+    	{
+    	    data.append(key, value);
+    	});
+
+    	$.ajax({
+    	    url: myurl,
+    	    type: 'POST',
+    	    data: data,
+    	    cache: false,
+    	    dataType: 'json',
+    	    processData: false, // Don't process the files
+    	    contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+    	    success: function(data, textStatus, jqXHR) {
+
+    	    }, error: function(jqXHR, textStatus, errorThrown) {
+
+    	    }
+    	});
+	}
+
+	function rotateClick() {
+		if (croppieimage === '') {
+
+		} else {
+				croppieimage.rotate('270')
+		}
+	}
+
+	function cancelClick() {
+		$('#btnAccept').addClass("hidden")
+		$('#btnCancel').addClass("hidden")
+		$('#btnRotate').addClass("hidden")
+		$('#fileselectorwrapper').removeClass("hidden")
+		croppieimage.destroy()
+		$("#cover-drop-zonecover").empty()
+		$("#cover-drop-zonecover").append(old)
+		croppieimage = ''
+		delete croppieimage
+		setDropZoneListeners()
+	}
+
+	function setDropZoneListeners() {
+		var dropzone = $('#cover-drop-zone');
+
+		dropzone.on('dragover', function() {
+		    //add hover class when drag over
+		    dropzone.addClass('hover');
+		    return false;
+		});
+
+		dropzone.on('dragleave', function() {
+		    //remove hover class when drag out
+		    dropzone.removeClass('hover');
+		    return false;
+		});
+
+		dropzone.on('drop', function(e) {
+		    //prevent browser from open the file when drop off
+		    e.stopPropagation();
+		    e.preventDefault();
+		    dropzone.removeClass('hover');
+
+		    //retrieve uploaded files data
+		    var files = e.originalEvent.dataTransfer.files;
+		    processFiles(files);
+
+		    return false;
+		});
+	}
+
+	function changeProfileClick() {
+        if (typeof (FileReader) != "undefined") {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                activateCroppie(e,'cover-drop-zone',croppieinit)
+            }
+
+            reader.readAsDataURL($('#btnNewDP')[0].files[0]);
+        } else {
+            alert("This browser does not support FileReader.");
+        }
+	}
+
+	var croppieimage = '';
+	var old;
+
+	function croppieinit() {
+		$('#btnAccept').removeClass("hidden")
+		$('#btnRotate').removeClass("hidden")
+		$('#btnCancel').removeClass("hidden")
+		$('#fileselectorwrapper').addClass("hidden")
+	}
+
+	function activateCroppie(e2,itemid,thendothis) {
+		if (croppieimage === '') {
+
+		} else {
+			cancelClick()
+		}
+		opts = {
+			showZoomer: true,
+			enableOrientation: true,
+			enableZoom: true,
+			customClass: 'croppitcustom'
+		}
+		old = $('#' + itemid).clone()
+		$('#' + itemid).attr("src",e2.target.result)
+		croppieimage = new Croppie(document.getElementById('cover-drop-zone'), opts);
+		thendothis()
+	}
+
+	function processFiles(files) {
+		for (var i=0, file; file=files[i]; i++) {
+			if (file.type.match(/image.*/)) {
+				var reader = new FileReader();
+
+				reader.onload = function(e2) {
+					// finished reading file data.
+					activateCroppie(e2,'cover-drop-zone',croppieinit)
+				}
+				reader.readAsDataURL(file); // start reading the file data.
+			}
+		}
+	}
+//# sourceURL=profile.html
+</script>
+
+
+
+<div class="col-md-12 row justify-content-md-center">
+	<div class="col-md-12 justify-content-md-center" >
+		<h1 style="text-align:center;
+			color:#5a5a5a">
+			Profile
+		</h1>
+	</div>
+
+	<div class="col-md-8">
+
+		<div class="row col-md-12">
+			<div class="jumbotron  bg-dark text-light justify-content-md-center" style="width:100%">
+			  <div class="container row justify-content-md-center" style="float:right;text-align:justify">
+				  <div class="col-lg-1">&nbsp</div>
+				  <div  class="col-lg-4">
+					<div id="cover-drop-zonecover"style="height:100%">
+					  <img id="cover-drop-zone" class="image-drop-zone" type="file" src="/getimageid-{{ user.profileid }}"
+		 style="width:100%;max-width:20vh"class="img-circle" alt={% if isme %}"Just drag a picture here and it automatically becomes the face of {{ user.name }}"{% else %}""{% endif %}>
+					</div>
+						<h5 style="display:block">
+                <label>&nbsp &nbsp &nbsp </label></h5>
+				  </div>
+				  <div class="col-md-7">
+			    <h1 class="display-4">{{ user.name }} {{ user.middlename }} {{ user.lastname }}</h1>
+			    <p class="lead"><b style="
+						background: linear-gradient(-15deg, #f16581, orange);
+						background-clip: text;
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;">{{ user.email }}</b></p> {% if isme %}{% else %}
+					<button style="" onclick="javascript:friendpress()" id="friendbtn" class="ml-2 btn btn-sm {% if isfriends %}btn-outline-secondary{% else %}btn-outline-primary{% endif %}">
+							{% if isfriends %}Unfriend{% else %}Add Friend{% endif %}
+					</button>
+					{% endif %}
+					{% if isme %}
+						<div id="fileselectorwrapper" class="btn btn-sm btn-outline-secondary" style="position: relative;overflow: hidden;direction: ltr;">
+							<div>Select New Profile Image</div>
+						<input id="btnNewDP" style="position: absolute;right: 0px;top: 0px;font-family: Arial;font-size: 118px;margin: 0px;padding: 0px;cursor: pointer;opacity: 0;height: 100%;" class="btn btn-outline-light" type="file"/>
+						</div>
+					  <button  onclick="javascript:acceptClick()" id="btnAccept" class="hidden ml-1 mt-1 btn btn-sm btn-outline-primary">
+							Accept
+						</button>
+					  <button  onclick="javascript:rotateClick()" id="btnRotate" class="hidden ml-1 mt-1 btn btn-sm btn-outline-light">
+							Rotate
+						</button>
+					  <button  onclick="javascript:cancelClick()" id="btnCancel" class="hidden ml-1 mt-1 btn btn-sm btn-outline-warning">
+							Cancel
+						</button>
+					{% endif %}
+				  </div>
+
+			  </div>
+
+			</div>
+
+
+
+
+			<nav class="navbar navbar-expand-lg navbar-dark text-light bg-dark" style="width:100%">
+			  <!--<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">-->
+			    <!--<span class="navbar-toggler-icon"></span>-->
+			  <!--</button>-->
+
+			    <ul class="navbar-nav ml-auto mr-auto">
+			      <li class="nav-item active">
+					  	<a class="nav-link" href="#">Posts: <b>{{ postcount }}</b></a>
+			      </li>
+			      <li class="nav-item">
+					  	<a class="nav-link" href="#">Friends: <b>{{ friendcount }}</b><span class="sr-only">(current)</span></a>
+			      </li>
+			    </ul>
+			</nav>
+		</div>
+	{% if bobsposts|length > 0 %}
+	<!--<div class="row col-md-8">-->
+		<div class="card text-light" style="background-color:#23272b">
+			<div class="card-body row">
+	{% for post in bobsposts %}
+		<div class="col-md-6" style="margin-bottom:20px;margin-top:10px">
+	<div class="card text-white bg-dark">
+	  	<!--<img class="card-img-top" src="..." alt="Card image cap">-->
+		<div class="card-header" style="text-align: center;">
+			<b style="
+						background: linear-gradient(-15deg, #f16581, orange);
+						background-clip: text;
+						-webkit-background-clip: text;
+						-webkit-text-fill-color: transparent;">
+			{{ post.owner.display }}</b></div>
+	  	<div class="card-body">
+	  	  	<p class="card-text">{{ post.details }}</p>
+	  	</div>
+	  	<ul class="list-group list-group-flush text-white bg-dark">
+	  	  	<li class="list-group-item bg-dark">
+				<div style="float:left">
+					Liked by {{ post.likecount }}
+				</div>
+				<div class="" style="float:right">
+					{{ post.commentcount }} comments
+				</div>
+			</li>
+			{% for comment in post.comments %}
+				<li class="list-group-item"><b>{{ comment.owner.email }} commented:</b> {{ comment.message }}</li>
+			{% endfor %}
+	  	</ul>
+	  	<!--<div class="card-body">-->
+			  <!--<a href="#" class="card-link">Card link</a>-->
+			  <!--<a href="#" class="card-link">Another link</a>-->
+	  	<!--</div>-->
+	</div>
+		</div>
+	<!--<div class="col-md-12"> </div>-->
+	{% endfor %}
+			</div>
+		</div>
+	<!--</div>-->
+	{% else %}
+	<div class="col-md-12 justify-content-md-center" >
+		<h1 style="text-align:center;
+			color:#5a5a5a">
+				{{ user.name }} hasn't posted anything yet.. (Maybe they need some encouragement)
+		</h1>
+	</div>
+	{% endif %}
+	</div>
+</div>

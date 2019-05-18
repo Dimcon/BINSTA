@@ -1,0 +1,292 @@
+
+var nametagsize = [8,1.2]
+
+class PeopleManager {
+    constructor() {
+        this.people = {}
+    }
+
+    setupSocketCallbacks() {
+        socket.on('LoadPersonData', function(fromserver) {
+            let bruce = peopleManager.getPerson(fromserver.email)
+            bruce.name = fromserver.name
+            bruce.bio = fromserver.bio
+            let NewImage = false
+            if (bruce.profileimageid != fromserver.profileimageid) {
+                NewImage = true
+            }
+            bruce.profileimageid = fromserver.profileimageid
+            bruce.idnum = fromserver.idnum
+            bruce.ready = true
+            bruce.hasdatachanged = true
+            bruce.friendCount = fromserver.friendCount
+            bruce.isFriends = fromserver.isFriend
+            if (NewImage) {
+                peopleManager.getPersonImage(bruce)
+            }
+            for (let method in bruce.onChangeDataCallbacks) {
+                bruce.onChangeDataCallbacks[method][0](bruce,bruce.onChangeDataCallbacks[method][1])
+            }
+            completedSomeLoad()
+        });
+    }
+
+    getPersonImage(bruce) {
+        if (bruce.profileimageid > 0) {
+            bruce.loader = new PIXI.loaders.Loader();
+                    var loaderOptions = {
+                        loadType: PIXI.loaders.Resource.LOAD_TYPE.IMAGE,
+                        xhrType: PIXI.loaders.Resource.XHR_RESPONSE_TYPE.BLOB
+                    };
+                    bruce.loader.bruce = bruce
+                    bruce.loader
+                        .add('Img', "/getimageid-" + bruce.profileimageid,loaderOptions)
+                        .on('load',function (loader,resource) {
+                            let bruce = loader.bruce
+                            resource.texture.mipmap = true
+                            let sprite = new PIXI.Sprite(resource.texture)
+                            let loadedimage = sprite
+                            bruce.profileimage = resource.texture
+                            //let img = image
+                            //img.mask(circlemask)
+                            bruce.imageready = true
+                            bruce.hasdatachanged = true
+                            bruce.generateFriendButtonGraphic()
+                            for (let method in bruce.onChangeSpriteCallbacks) {
+                                bruce.onChangeSpriteCallbacks[method][0](bruce,bruce.onChangeSpriteCallbacks[method][1])
+                            }
+                            completedSomeLoad()
+                        });
+            bruce.loader.load()
+        }
+    }
+
+    loadPerson(bruce) {
+            bruce.ready = false
+            bruce.imageready = false
+            socket.emit('LoadPerson', {data: "TestData21", email: bruce.email});
+    }
+
+    updateDetails(emailaddr) {
+        for (let p in this.people) {
+            if (this.people[p].email === emailaddr) {
+                this.loadPerson(this.people[p])
+            }
+        }
+    }
+
+    MakeNewPerson(email) {
+        let p = new person(email)
+        this.people[email] = p
+        return this.people[email]
+    }
+
+    addFunctionOnPersonChange(email, callback) {
+        this.getPerson(email).callbacks.push(callback)
+    }
+
+    callAllCallbacks(bruce) {
+        let callbacks = bruce.callbacks
+        for (let i = 0; i < callbacks.length;i++) {
+            let tmpmethod = callbacks[i]
+            tmpmethod()
+        }
+    }
+
+    getPerson(email) {
+        if (email in this.people) {
+            return this.people[email]
+        } else {
+            return this.MakeNewPerson(email)
+        }
+    }
+
+
+    draw() {
+        //this.drawUsers()
+    }
+
+    drawUsers() {
+        let scale = unitsize / 50
+        userCircleMask.scale.x = scale
+        userCircleMask.scale.y = scale
+        for(let email in this.people) {
+            if (this.people[email].IsInRangeTimer > 0) {
+                let bob = this.people[email]
+                newvecposition = ScreenCoordToPlaneCoord(new Vector(bob.MapPosition[0],bob.MapPosition[1]))
+
+                if (useremail == bob.email) {
+                    fill(180,100)
+                    noStroke()
+                } else {
+                    fill(180,50,50,100)
+                    noStroke()
+                }
+
+                if (bob.imageready) {
+                    let img = bruce.profileImageBuffer
+                    //img.mask(circlemask)
+                    let size = 2*unitsize
+                    image(img,newvecposition.x - (size/2), newvecposition.y - (size/2),size,size)
+                } else {
+                    ellipse(newvecposition.x, newvecposition.y,1*unitsize,1*unitsize);
+                }
+                if (useremail != bob.email) {
+                    noFill()
+                    strokeWeight(3)
+                    stroke(180,50,50,100)
+                    let zoomlevel = 1000
+                    ellipse(newvecposition.x, newvecposition.y,zoomlevel*unitsize/bob.zoomlevel,zoomlevel*unitsize/bob.zoomlevel);
+                }
+            }
+        }
+    }
+
+}
+
+class person {
+        constructor(email) {
+            this.ready = false
+            this.imageready = false
+            this.onChangeSpriteCallbacks = []
+            this.onChangeDataCallbacks = []
+            this.email = email
+            this.name = "..."
+            this.bio = "..."
+            this.profileimageid = 0
+            this.idnum = "..."
+            this.callbacks = []
+            this.hasdatachanged = true
+            this.MapPosition = []
+            this.zoomlevel = 30
+            this.IsInRangeTimer = 0
+            this.profileAnimationValue = 0
+            this.Animating = false
+            this.friendCount = 0
+            this.isFriends = false
+            this.friendbtnsprite = new PIXI.Sprite()
+            peopleManager.loadPerson(this)
+        }
+
+        generateFriendButtonGraphic() {
+            let friendbtnsprite = new PIXI.Sprite()
+            let friendbtngraphics = new PIXI.Graphics()
+            let textstyle = ""
+            let text1 = ""
+            if (this.isFriends) {
+                textstyle = new PIXI.TextStyle({
+                    fontFamily: BodyFont,
+                    fontSize: 28,
+                    fontWeight: 'normal',
+                    fill: ['#777777'],
+                    fillGradientType: 2,
+                    stroke: '#777777',
+                    strokeThickness: 0,
+                    wordWrap: false,
+                    breakWords:true,
+                    align:'Justified'
+                })
+                text1 = "Unfollow"
+                friendbtngraphics.lineStyle(2, 0x777777, 1);
+                friendbtngraphics.beginFill(0x404040);
+            } else {
+                textstyle = new PIXI.TextStyle({
+                    fontFamily: BodyFont,
+                    fontSize: 28,
+                    fontWeight: 'normal',
+                    fill: ['#007bff'],
+                    fillGradientType: 2,
+                    stroke: '#3434ee',
+                    strokeThickness: 0,
+                    wordWrap: false,
+                    breakWords:true,
+                    align:'Justified'
+                })
+                text1 = "Follow"
+                friendbtngraphics.lineStyle(2, 0x007bff, 1);
+                friendbtngraphics.beginFill(0x404040);
+            }
+            let tmpText1 = new PIXI.Text(text1, textstyle);
+            let textMetrics1 = PIXI.TextMetrics.measureText(text1, textstyle)
+
+            let width = 50 * 2
+            let height = 40 * 1
+            let TextSprite = RenderTextToSprite(tmpText1)
+            TextSprite.position.x = (20)
+            TextSprite.position.y = (5)
+            friendbtngraphics.drawRoundedRect(0, 0, textMetrics1.width + 40, height,8);
+            friendbtngraphics.endFill();
+
+            friendbtnsprite.addChild(friendbtngraphics)
+            friendbtnsprite.addChild(TextSprite)
+
+            friendbtnsprite.interactive = true
+            let bremail = this.email
+            friendbtnsprite.on("click",function(e) {
+                let bruce = peopleManager.getPerson(bremail)
+                let uemail = bruce.email
+                if (bruce.isFriends) {
+                	breakfriend(uemail,function() {
+                        bruce.isFriends = false
+                        bruce.generateFriendButtonGraphic()
+                        dissuccess("You won't hear from them!")
+                        bruce.NotifyDataChanged()
+                    })
+                } else {
+                	makefriend(uemail,function() {
+                	    bruce.isFriends = true
+                	    bruce.generateFriendButtonGraphic()
+                        dissuccess("You have made a new friend!")
+                        bruce.NotifyDataChanged()
+                    })
+                }
+            })
+            for (var i = this.friendbtnsprite.children.length - 1; i >= 0; i--) {	this.friendbtnsprite.removeChild(this.friendbtnsprite.children[i]);};
+            this.friendbtnsprite.addChild(friendbtnsprite)
+        }
+
+        NotifyDataChanged() {
+            socket.emit('PositionUpdate', {data: this.email, posx:1, detailsChanged:1, posy:1, zoom: 1});
+        }
+
+        onImageChanged(callback,DataComponent) {
+            for (let method in this.onChangeDataCallbacks) {
+                if ( this.onChangeDataCallbacks[method][1].coordinateID == DataComponent.coordinateID) {
+                    //delete this.onChangeDataCallbacks[method]
+                    console.log("Duplicate callback")
+                }
+            }
+            if (this.imageready) {
+                callback(this,DataComponent)
+            }
+            this.onChangeSpriteCallbacks.push([callback,DataComponent])
+        }
+
+        onDataChanged(callback,DataComponent) {
+            for (let method in this.onChangeDataCallbacks) {
+                if ( this.onChangeDataCallbacks[method][1].coordinateID == DataComponent.coordinateID) {
+                    //delete this.onChangeDataCallbacks[method]
+                    console.log("Duplicate callback")
+                }
+            }
+            if (this.ready) {
+                callback(this,DataComponent)
+            }
+            this.onChangeDataCallbacks.push([callback,DataComponent])
+        }
+
+        datachanged() {
+            drawUserDetails(this, new Vector(0,0), new Vector(50 * nametagsize[0], 50 * nametagsize[1]), this.personalBuffer)
+        }
+
+        getBuffer() {
+            if (this.hasdatachanged) {
+                this.datachanged()
+                this.hasdatachanged = false
+            }
+            return this.personalBuffer
+        }
+    }
+
+
+//# sourceURL=peopleManager.js

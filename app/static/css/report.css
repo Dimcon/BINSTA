@@ -1,0 +1,662 @@
+/* @font-face {
+  font-family: Tall;
+  src: url("fonts/TallFilm.ttf");
+} */
+
+@page {
+	background: url('./app/static/images/lms-ipd-bkg-01.png') no-repeat;
+	background-size: cover;
+	margin: 0;
+}
+
+@page {
+	@bottom-center {
+		   content: "Page " counter(page) " of " counter(pages);
+		   margin-top:-40px;
+		   color:#aaaaaa;
+	}
+	@top-center {
+		content: "Copyright © 2017 - The Institute of People Development (IPD)";
+		margin-bottom:-40px;
+
+	}
+
+
+}
+
+* { float: none !important; }
+
+.flashcontainer {
+	text-align:center;
+}
+
+#questioninput {
+	font-size:14pt;
+}
+
+.breaker {
+	page-break-after:always;
+}
+
+
+table {
+}
+td, th {
+	border: solid;
+	border-width: 1px;
+}
+h1 {
+  font-family: Helvetica;
+}
+
+h2 {
+  font-family: Helvetica;
+}
+
+h3 {
+  /* Tests: */
+  font-family: Helvetica;
+  font-size: 24px;
+  color: #000000;
+  font-weight: bold;
+}
+
+h4 {
+  /* Android Lectures: */
+  font-family: Helvetica;
+  font-size: 13px;
+  color: white;
+  font-weight: bold;
+}
+
+h5 {
+  /* Android Lectures: */
+  font-family: Helvetica;
+  font-size: 10px;
+  color: #000000;
+}
+
+h6 {
+  font-family: Helvetica;
+  font-size: 20px;
+  color: #000000;
+  font-weight: bold;
+}
+
+::-webkit-input-placeholder {
+  color: #9B9B9B;
+}
+
+:-moz-placeholder {
+  color: #9B9B9B;
+}
+
+::-moz-placeholder {
+  color: #9B9B9B;
+}
+
+hr{
+   border: 1px solid #000000;
+   
+}
+
+ul {
+  margin-left: -40px;
+  margin-top: -35px;
+}
+
+#pic {
+  border-radius: 50%;
+  border-color: white;
+  border-style: solid;
+  border-width: 4px;
+}
+
+/* Notifications  */
+
+.title-bar {
+  margin: 21px 0 21px 0;
+  background-color: #2F2F55;
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #FFFFFF;
+  list-style: none;
+  width: 100%;
+}
+
+.title-bar-bottom {
+  margin: 21px 0 21px 0;
+  background-color: #2F2F55; 
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #2F2F55;
+  list-style: none;
+  width: 100%;
+  height: 58px;
+}
+
+.title-bar-bottom2 {
+  margin: 21px 0 21px 0;
+  background-color: #D8BD69; 
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #2F2F55;
+  list-style: none;
+  width: 100%;
+  height: 58px;
+}
+.content-box2 {
+  width: 100%;
+  display: inline-block;
+  font-family: Helvetica;
+  font-size: 14px;
+  color: #000000;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+.content-box2 h4 {
+  font-size: 18px;
+  color: white;
+}
+
+.contentheader {
+    background:#2F2F55;
+    color:white;
+    text-align:center;
+}
+
+.subheader {
+    background: #f6ba5c;
+	font-family: century gothic;
+}
+
+.content-box {
+  width: 100%;
+  background-color: #E7E7E7;
+  padding-right:60px;
+  padding-top: 35px;
+  padding-bottom: 35px;
+  padding-left: 60px;
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #000000;
+  margin-bottom: 10px;
+}
+.content-box2 h2 {
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #000000;
+}
+
+.content-box2 h3 {
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 30px;
+  color: #000000;
+}
+
+.content-box h2{
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #000000;
+}
+
+.content-box div {
+  /* Seeing as both Andro: */
+  margin: 5px;
+  font-family: Helvetica;
+  font-weight: medium;
+  font-size: 8px;
+  color: #000000;
+}
+
+p {
+  /* Seeing as both Andro: */
+  margin: 0px;
+  font-family: Helvetica;
+  font-weight: medium;
+  font-size: 10px;
+  color: #000000;
+  line-height: 1.1;
+}
+
+/* Courses  */
+
+#mod1 {
+  background: #6CBD46;
+}
+
+#mod2 {
+   background: #D8BD69;
+ }
+
+#mod3 {
+   background: #A5402D;
+ }
+ 
+#mod4 {
+   background: #2A628F;
+ }
+ 
+
+
+#show-more {
+  font-family: Helvetica;
+  font-weight: medium;
+  font-size: 14px;
+  color: #000000; 
+  left: 47%;
+  position: absolute;
+}
+
+#courses {
+  margin-top: -18px;
+}
+
+#courses li {
+  display: inline-block; 
+  text-align: center;
+}
+
+
+.module-box {
+  border: 3px solid #000000;
+  width: 123px;
+  height: 37px;
+}
+
+#color {
+  background: #2F2F55;
+  
+}
+
+#color:hover {
+  background: #2F2F55;
+}
+
+.courses--module-box-title {
+  margin-top: 15px; 
+  width: 100%;
+  background-color: #6CBD45;
+  height: 50px;
+  border: 3px solid #000000;
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 36px;
+  color: #FFFFFF;
+}
+
+.courses--module-box-body {
+  width: 100%;
+  background-color: white;
+  border: 3px solid #000000;
+  border-top-style: none;
+  list-style: none;
+  display: inline-block; /* good */
+}
+
+.module-box-full {
+  width: 252px;
+  background-color: white;
+  margin-left: 20px;
+  padding-top: 0px;
+}
+
+ .courses--module-box-body li {
+  list-style: none; /* good */
+  float: left; /* breaking responsive panels */
+  
+} 
+
+
+ .courses--module-box-body li div {
+  list-style: none;
+  display: inline-block; /* good */
+} 
+
+.courses--module-file-box {
+  margin-top: -10px;
+  width: 550px;
+}
+
+.courses--module-file-box li {
+  height: -20px;
+}
+
+.courses--module-file-box ul li div img{
+  margin-top: 0px;
+  height: 32px;
+}
+
+.testbox-right {
+  margin-left: 10px;
+}
+
+.module-box-full h3 {
+  margin-bottom: 25px;
+}
+
+/* Lalign="left"align="left"align="left"align="left"eft Bar */
+
+.content-box-left {
+  width: 100%;
+  background-color: #E7E7E7;
+  padding-right:20px;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  font-family: Helvetica;
+  font-weight: bold;
+  font-size: 48px;
+  color: #000000;
+  margin-bottom: 10px;
+}
+
+.left-bar-content {
+  text-align: center;
+  vertical-align:middle;
+  padding: 0px;
+}
+
+#left-bar-font-current {
+  color:white;
+}
+
+#left-bar-font {
+  color:#6cbd45;
+}
+
+
+#left-bar {
+  width: 100%;
+  height: 39px;
+  background-color: white;
+  vertical-align: middle;
+  line-height: 39px;
+  font-size: 15px;
+  margin-bottom: 8px;  
+  
+}
+
+#left-bar-current {
+  width: 100%;
+  height: 39px;
+  background-color: #6cbd45;
+  color: white
+  vertical-align: middle;
+  line-height: 39px;
+  font-size: 15px;
+  margin-bottom: 8px;  
+  
+}
+
+#current {
+  width: 100%;
+  height: 39px;
+  background-color: #6CBD46;
+  color: white;
+  vertical-align: middle;
+  line-height: 39px;
+  font-size: 15px;
+  margin-bottom: 8px; 
+}
+
+.flasher {
+  text-align: center;
+  padding-bottom: 0cm;
+  margin-bottom: 0cm;
+  display: inline;
+}
+/* Welcome Page */
+
+.welcome-box {
+  text-align: center;
+}
+
+.admin-def {
+  text-align: center;
+}
+
+
+#ipd-logo {
+  height: 77.09px;
+}
+
+.welcome-userinfo-button {
+  width: 100%;
+  background: #E7E7E7;
+  height: 34px;
+  border: none;
+  color: black;
+  padding-left: 10px;
+  font-weight: bold;
+  outline: 0;
+}
+
+.welcome-submit-button {
+  width: 100%;
+  background: #E7E7E7;
+  height: 34px;
+  border-style: none;
+  color: black;
+  padding-left: 10px;
+  font-weight: bold;
+}
+
+.welcome-submit-button:hover {
+  width: 100%;
+  background: #D2D2D2;
+  height: 34px;
+  border-style: none;
+  color: black;
+  padding-left: 10px;
+  font-weight: bold;
+}
+
+
+
+.welcome-createaccount-button {
+  width: 100%;
+  background: #6CBD45;
+  border-style: none;
+  color: white;
+  padding-left: 10px;
+  font-weight: bold;
+  padding: 8px;
+}
+
+.welcome-createaccount-button:hover {
+  width: 100%;
+  background: #63AC3F;
+  border-style: none;
+  color: white;
+  padding-left: 10px;
+  font-weight: bold;
+  padding: 8px;
+}
+
+.box1 img {
+  margin-top: 13px;
+}
+
+.box2 img {
+  margin-top: 13px;
+}
+
+#studentLeft {
+  border-right-width: 8px;
+  border-left-width: 0px;
+  border-bottom-width: 0px;
+  height: 120px;
+  padding: 5px;
+}
+
+#studentRight {
+  border-left-width: 8px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
+  height: 120px;
+  padding: 5px;
+  
+}
+
+.myLabel {
+  width: 50%;
+  background-color: #E7E7E7;
+  text-align: center;
+  vertical-align:middle;
+  padding: 0px;
+  float: left;
+  margin-bottom: 15px;
+  border-color: white;
+  border-style: solid;
+  /* border: 6px solid white */
+}
+
+.myLabel:hover {
+  width: 50%;
+  background-color: #D2D2D2;
+  text-align: center;
+  vertical-align:middle;
+  padding: 0px;
+  float: left;
+  margin-bottom: 15px;
+  border-color: white;
+  border-style: solid;
+  /* border: 6px solid white */
+}
+
+.myLabel  > input {
+  visibility: hidden;
+  position: absolute; 
+}
+
+.myLabel > input + .box1 {
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.myLabel  > input:checked + .box1 {
+  cursor: pointer;
+  border: 2px solid #2F2F55;
+} 
+
+.myLabel  > input + .box2 {
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.myLabel  > input:checked + .box2 {
+  cursor: pointer;
+  border: 2px solid #2F2F55;
+} 
+
+/* Modal  */
+
+.mytest {
+  background-color: #2F2F55;
+  color: white;
+}
+
+.modal-body {
+  font-family: helvetica;
+}
+
+
+ 
+/* Quiz */
+
+.quiz-box {
+}
+
+.quiz-box-left {
+  text-align: center;
+  padding: 25px;
+}
+
+ol li {
+  color: black;
+  font-size: 20px;
+  list-style: none;
+  margin-left: -40px;
+}
+
+#submit-buttons {
+  
+  height: 28px;
+  width: 138px;
+  background-color: black;
+  color: white;
+  font-size: 14px;
+  border-style: none;
+  
+}
+
+.submit-buttons {
+  
+  height: 28px;
+  width: 138px;
+  background-color: black;
+  color: white;
+  font-size: 14px;
+  border-style: none;
+  
+}
+
+#block-completed {
+  height: 12px;
+  width: 12px;
+  background-color: black;
+  list-style: none;
+  margin: 5px;
+  float: left;
+}
+
+#block-uncompleted {
+  border: 3px solid black;
+  background-color: #E7E7E7;
+  height: 12px;
+  width: 12px;
+  list-style: none;
+  margin: 5px;
+  float: left;
+}
+
+#quiz-left-counter {
+  margin-top: 0px;
+}
+
+#quiz-form-hr {
+  margin-bottom: -10px;
+}
+
+.testradio {
+  background-color: pink;
+  height: 100px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

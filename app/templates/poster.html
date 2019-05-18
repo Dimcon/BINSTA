@@ -1,0 +1,50 @@
+
+
+    <script>
+        function post() {
+            formtext = $('#posttext').val()
+            $.post("/poster",{
+		    	postcheck: "true",
+		    	text: formtext
+		    }).done(function(fromserver) {
+		    	if (fromserver.success == 't') {
+		    	    dissuccess('Your message was posted successfully!!11!!111!!')
+		    	} else {
+		    	    info('Your message was sent to the cloud during a storm. It might not arrive in one piece')
+		    	}
+		    }).fail(function() {
+		        error("I can't find the internet... Your message wasn't sent.")
+		    })
+		    disflash('Your message is being delivered...')
+		    $('#PostModal').modal('hide')
+        }
+    </script>
+    <div class="card text-light bg-dark" style="padding:40px;text-align:center">&nbsp
+        <h3>Write something</h3>
+        <form method="post">
+            <div class="form-group">
+                <!--<label class="" for="form1" >Text</label>--><br>
+                <textarea name="posttext" id="posttext" class="form-control"></textarea>
+            </div>
+            <div>
+            <div style="float:left">
+                <button name="btnpost" type="button" onclick="javascript:upload()" style="" class="btn-sm btn btn-dark">
+                    Include photo
+                </button>
+            </div>
+            <button name="btnpost" type="button" onclick="javascript:closeposter()" style="float:right" class="btn-sm btn btn-dark">
+                Cancel
+            </button>
+            </div><br>
+            <hr>
+            <div class="row">
+                 <div class="col-md-3">&nbsp<br>&nbsp
+                    </div>
+            <button name="btnpost" type="button" onclick="javascript:post()" style="width:150px" class="col-md-6 pr-0 pl-0 btn btn-dark">
+            Post!
+            </button>
+                <div class="col-md-3">&nbsp<br>&nbsp
+                    </div>
+            </div>
+        </form>
+    </div>
