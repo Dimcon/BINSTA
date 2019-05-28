@@ -110,8 +110,13 @@ class Userxconversation(db.Model):
 	userid = db.Column(db.Integer, index=True)
 	conversationid = db.Column(db.Integer, index=True)
 	joinstatus = db.Column(db.String(256))
+	# 1 = joined convo
+	# 2 = Left Convo
 	userjoindate = db.Column(db.DateTime)
 	userrights = db.Column(db.Integer)
+	# 0 = Full access
+	# 1 = Can't add/remove people, can't delete messages
+	# 2 = Can't change name/image of group
 
 class Conversation(db.Model):
 	id = db.Column(db.Integer, primary_key=True)

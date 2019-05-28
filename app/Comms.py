@@ -49,6 +49,8 @@ def profanityCheck(sinput):
 	for word in profanityWordsAndReplacements:
 		if word in sinput:
 			sinput.replace(word,profanityWordsAndReplacements[word])
+	from profanity import profanity
+	sinput = profanity.censor(sinput)
 	return sinput
 
 #       Conversation
@@ -71,6 +73,37 @@ def profanityCheck(sinput):
 
 @socketio.on('PollUpdates', namespace='/navengine')
 def PollUpdates(data):
+	LastUpdated = data("LastUpdatedAt")
+
+	convos = Userxconversation.query.filter_by().order_by(Userxconversation.userjoindate.desc()).limit(5).all()
+	data = {}
+	for convo in convos:
+		c = {}
+		c.name = convo.name
+		c.privacy = convo.privacy
+		users = query(User).filter((Userxconversation.conversationid == convo.conversationid)\
+								   & (User.id == Userxconversation.userid)).all()
+		messages = Cmessage.query.filter_by(conversationid=convo.id)\
+			.order_by(Cmessage.time.desc())\
+			.limit(30)\
+			.all()
+		c.messages = []
+		for m in messages:
+			msg = {
+				"fromuserid":m.fromuserid,
+				"time":m.time ,
+				"fileids":m.fileids ,
+				"sentlist": m.sentlist,
+				"recievedlist": m.recievedlist ,
+				"message": m.message
+			}
+			msg.user = next(user for user in users if user ["id"] == m.fromuserid)
+			if msg.user is None:
+				soutd("Comms.py: PollUpdates: Message has user that wasn't caught by users query."
+					  + " This has caused an unexpected SQL query: Performance--",1)
+				msg.user = dbget(User,id=m.fromuserid)
+			c.messages.append(msg)
+
 	pass
 
 @socketio.on('NewConvo', namespace='/navengine')
@@ -99,6 +132,21 @@ def LeaveConvo(data):
 	dbcommit()
 	pass
 
+def getConvoPermission(user,convoid):
+	uxc = dbget(Userxconversation, userid=user.id, conversationid=convoid)
+	if uxc is None:
+		raise Exception("Comms.py, hasChangedConvoAccess: invalid parameters, UXC is null")
+	return uxc.userrights
+
+def hasFullConvoAccess(User,convoid):
+	return getConvoPermission(User,convoid) != 0
+
+def hasPeopleAndMessageDeleteAccess(User,convoid):
+	return getConvoPermission(User, convoid) != 1
+
+def hasChangeConvoAccess(User,convoid):
+	return getConvoPermission(User, convoid) != 2
+
 def getUserEmailssFromConvo(convoid):
 	uxcs = dbgetlist(Userxconversation,convoid=int(convoid))
 	usrs = []
@@ -125,6 +173,8 @@ def SendMessage(data):
 def AddUsers(data):
 	usrs = data["users"]
 	convoid = data["convoid"]
+	if not hasPeopleAndMessageDeleteAccess(current_user,convoid):
+		return
 	for p in usrs:
 		user = dbget(User, email=p)
 		if user is not None:
@@ -140,14 +190,26 @@ def AddUsers(data):
 
 @socketio.on('RemoveUsers', namespace='/navengine')
 def RemoveUsers(data):
-	pass
+	usrs = data["users"]
+	convoid = data["convoid"]
+	if not hasPeopleAndMessageDeleteAccess(current_user,convoid):
+		return
+	for p in usrs:
+		user = dbget(User, email=p)
+		if user is not None:
+			uxc = dbget(Userxconversation, userid=user.id,conversationid=convoid)
+			if uxc is not None:
+				db.session.delete()
+	dbcommit()
 
+
+# TODO: Fill in Convo link and report functionality
 @socketio.on('GetConvoLink', namespace='/navengine')
 def GetConvoLink(data):
 	pass
 
 @socketio.on('JoinConvoViaLink', namespace='/navengine')
-def createNewConvo(data):
+def JoinConvoViaLink(data):
 	pass
 
 

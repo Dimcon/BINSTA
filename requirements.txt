@@ -43,3 +43,4 @@ webencodings==0.5.1
 werkzeug==0.9.6
 whoosh==2.6.0
 wtforms==2.0.1
+profanity==1.1
