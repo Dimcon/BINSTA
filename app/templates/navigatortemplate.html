@@ -23,6 +23,7 @@
 <script src='static/js/BinstLibs/popupMenuManager.js'></script>
 <script src='static/js/BinstLibs/PostLinkManager.js'></script>
 <script src='static/js/BinstLibs/NetworkLooper.js'></script>
+<script src='static/js/BinstLibs/Comms.js'></script>
 
 <script src='static/js/BinstUI-Elements/BinstUIManager.js'></script>
 <script src='static/js/BinstUI-Elements/NewPostUI.js'></script>
@@ -48,6 +49,9 @@
 
 <script src='static/js/Libraries/croppiestuff.js'></script>
 <script src="static/js/socket.io/socket.io.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
 <script>
     var UserPosition = [{{ usercenterpos[0] }},{{ usercenterpos[1] }}]
     var tmpimagedat = [0,"",""]
@@ -488,7 +492,23 @@ height:calc(30rem);
     background:#ff000055;
 }
 
+.coordeditor {
+    font-size:13px;
+    width:8rem;
+    height:2rem;
+    margin-top: auto;
+    margin-bottom: auto;
+    border-radius: 32px;
+    transition: 0.3s;
+}
 
+.coordeditor:hover {
+    font-size:20px;
+    border-radius: 5px;
+    width:12rem;
+    height:2.5rem;
+    transition: 0.3s;
+}
 </style>
 <div id="baselinebuttons"
      style="
@@ -498,9 +518,12 @@ width:100vw;
 height:calc(4rem);
 background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
      class="row d-flex justify-content-center">
-<div class="col-md-6 pb-3 pt-1">
+<div class="col-md-12 pb-3 pt-1">
     <div class="row text-light w-100 h-100 d-flex justify-content-center">
 
+        <div class=" pl-2 pr-2 d-flex justify-content-between">
+            <button id="msgbutton" class="btn uibtn" data-badge="6" onclick="javascript:hideshowmsgs()"><i class="fas fa-envelope"></i></button>
+        </div>
         <div class=" pl-2 pr-2 d-flex justify-content-between">
             <button id="backbutton" class="btn uibtn" onclick="javascript:GoBackOneStep()"><i class="fas fa-undo"></i></button>
         </div>
@@ -508,7 +531,7 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
             <button class="btn uibtn" onclick="javascript:userNavigation.gotoprofile()"><i class="fas fa-home"></i></button>
         </div>
         <div class="pl-2 pr-2 d-flex justify-content-between">
-            <input id="CoordinateEditor" onblur="enteredNewCoord();" class="form-control btn btn-outline-light" style="font-size:20px;width:12rem;color:#ff8100;" value="::">
+            <input id="CoordinateEditor" onblur="enteredNewCoord();" class="coordeditor form-control btn btn-outline-light" style="" value="::">
         </div>
         <div class="pl-2 pr-2 d-flex justify-content-between">
             <button type="button" id="statusbtn" class="btn statusbtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Connection status"><i class="fas fa-satellite"></i></button>
@@ -516,10 +539,13 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
         <div class="pl-2 pr-2 d-flex justify-content-between">
             <button onclick="javascript:newPostClick()" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></i></button>
         </div>
-
-        <div class="col-md-5 align-content-center">
-            <input id="zoomslider" oninput="javascript:userNavigation.jumpzoomto(1 + (($('#zoomslider').val() /100) * (100 - 1)))" type="range" min="0" max="100" class="slider">
+        <div class="pl-2 pr-2 d-flex justify-content-between">
+            <button onclick="javascript:zoomClick()" type="button" id="zoombtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post">50</button>
         </div>
+
+        <!--<div class="col-md-5 align-content-center">-->
+            <!--<input id="zoomslider" oninput="javascript:userNavigation.jumpzoomto(1 + (($('#zoomslider').val() /100) * (100 - 1)))" type="range" min="0" max="100" class="slider">-->
+        <!--</div>-->
 
 
         <!--<div class="btn-group dropup">-->
@@ -539,6 +565,27 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
 
 
 <script>
+
+    function zoomClick() {
+        let clickzoomstops = [1,2,3,9.7,19.2,24,30,46.8,100]
+        display.reverse()
+        clickzoomstops.reverse()
+        let found = false
+        let i = 1
+        for (i = 1;i < clickzoomstops.length;i++){
+            if (unitsize <= clickzoomstops[i] + 0.1 && unitsize >= clickzoomstops[i+1] -0.1) {
+                userNavigation.ZoomTo(clickzoomstops[i-1],60,true)
+                found = true
+                break;
+            }
+        }
+        if (!found) {
+            i = display.length - 1
+            userNavigation.ZoomTo(1,60,true)
+        }
+        $("#zoombtn").html(display[i])
+        $("#zoombtn").html(clickzoomstops[i] + "x")
+    }
 
     function newPostClick() {
         let posx = vecScreen.x/5 * 2;
@@ -738,6 +785,15 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
     background-color: #383838;
 }
 
+.thinscroll::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F500;
+}
+
+.thinscroll::-webkit-scrollbar-thumb {
+    background-color: #383838;
+}
+
 .updates-open {
     width:calc(15rem);
     transition: 0.3s;
@@ -747,6 +803,27 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
     width:calc(30rem);
     transition: 0.3s;
 }
+
+#CommsViewlistholder::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F500;
+}
+
+#CommsViewlistholder::-webkit-scrollbar-thumb {
+    background-color: #383838;
+}
+
+.commsview-open {
+    width:calc(30rem);
+    transition: 0.3s;
+}
+
+.commsview-open:hover {
+    width:calc(40rem);
+    transition: 0.3s;
+}
+
+
 </style>
 
 <div id="LocationHistory"
@@ -855,6 +932,16 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
 
         }
     }
+
+    function hideshowmsgs() {
+        if ($('#CommsView').hasClass("hidden")) {
+            $('#CommsView').removeClass("hidden")
+        } else {
+            $('#CommsView').addClass("hidden")
+        }
+    }
+
+    //# sourceURL=Navigatortemplate3.js
 </script>
 <div id="Updates"
      style="position:absolute;
@@ -862,7 +949,7 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
     bottom:0;
     border-radius:10px;
     background-image: linear-gradient(to left, #000000ff ,#000000ff,#000000ff,#050505cc, #22222277);"
-     class="updates-open pl-1 pr-1 text-light"
+     class="hidden updates-open pl-1 pr-1 text-light"
 >
     <div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">Updates</div>
     <div id="Updatelistholder" class="ml-2 mr-2" style="max-height:80vh;overflow-y:scroll;">
@@ -871,3 +958,16 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
     </div>
 </div>
 
+<div id="CommsView"
+     style="position:absolute;
+    left:3vh;
+    bottom:8vh;
+    border-radius:5px;
+    background-image: linear-gradient(to right, #222222cc ,#050505cc,#000000cc,#050505cc, #222222cc);
+    border:3px solid #777777ff;
+    overflow-y:none;
+"
+     class="hidden thinscroll commsview-open pl-1 pr-1 mb-1 mt-1 text-light"
+>
+
+</div>

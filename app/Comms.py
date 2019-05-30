@@ -24,6 +24,12 @@ comms = Blueprint('comm', __name__)
 
 home = "/home"
 
+#################################   main navigator page
+@comms.route('/loadcomms',methods=['GET','POST'])
+def LoadComms():
+	tmp =1
+	return render_template("Comms.html")
+
 @socketio.on('NetSendData',namespace='/navengine')
 def requestSetData(data):
 	key = data["key"]
@@ -71,40 +77,60 @@ def profanityCheck(sinput):
 #
 
 
-@socketio.on('PollUpdates', namespace='/navengine')
-def PollUpdates(data):
-	LastUpdated = data("LastUpdatedAt")
-
-	convos = Userxconversation.query.filter_by().order_by(Userxconversation.userjoindate.desc()).limit(5).all()
+@socketio.on('CommsInit', namespace='/navengine')
+def ChatInit(data):
+	convos = Userxconversation.query.filter_by(userid=current_user.id).order_by(Userxconversation.userjoindate.desc()).all()
+	#TODO: Need to make this return a limited amount of messages on first load.
 	data = {}
+	data['convos'] = []
 	for convo in convos:
+		converse = dbget(Conversation,id=convo.conversationid)
 		c = {}
-		c.name = convo.name
-		c.privacy = convo.privacy
-		users = query(User).filter((Userxconversation.conversationid == convo.conversationid)\
+		c['name'] = converse.name
+		c['privacy'] = converse.privacy
+		c['id'] = converse.id
+ 		tmpusers = query(User).filter((Userxconversation.conversationid == convo.conversationid)\
 								   & (User.id == Userxconversation.userid)).all()
-		messages = Cmessage.query.filter_by(conversationid=convo.id)\
+		users = []
+		cusers = []
+		for u in tmpusers:
+			if not u.id == current_user.id:
+				cusers.append({
+					'name':u.name,
+					'email': u.email,
+					'isonline': u.isonline,
+					'typinginconvoid': u.typinginconvoid
+				})
+			users.append(u)
+		c['users'] = cusers
+		messages = Cmessage.query\
+			.filter((Cmessage.conversationid == convo.id))\
 			.order_by(Cmessage.time.desc())\
-			.limit(30)\
 			.all()
-		c.messages = []
+		#.filter_by(db.cast(Cmessage.time, db.Date) > lastUpdateTime)\
+		c['messages'] = []
 		for m in messages:
 			msg = {
-				"fromuserid":m.fromuserid,
-				"time":m.time ,
-				"fileids":m.fileids ,
-				"sentlist": m.sentlist,
-				"recievedlist": m.recievedlist ,
-				"message": m.message
+					"fromuserid": m.fromuserid,
+					"time": str(m.time),
+					"fileids": m.fileids,
+					"sentlist": m.sentlist,
+					"recievedlist": m.recievedlist,
+					"message": m.message
 			}
-			msg.user = next(user for user in users if user ["id"] == m.fromuserid)
-			if msg.user is None:
+			user = next(user for user in users if user.id == m.fromuserid)
+
+			if user is None:
 				soutd("Comms.py: PollUpdates: Message has user that wasn't caught by users query."
 					  + " This has caused an unexpected SQL query: Performance--",1)
-				msg.user = dbget(User,id=m.fromuserid)
-			c.messages.append(msg)
+				user = dbget(User,id=m.fromuserid)
+			msg['useremail'] = user.email
+			msg['username'] = user.name
+			c['messages'].append(msg)
+		data['convos'].append(c)
+	emit('CommsInitResult', data)
+	# Return data in socket push
 
-	pass
 
 @socketio.on('NewConvo', namespace='/navengine')
 def createNewConvo(data):
@@ -148,12 +174,13 @@ def hasChangeConvoAccess(User,convoid):
 	return getConvoPermission(User, convoid) != 2
 
 def getUserEmailssFromConvo(convoid):
-	uxcs = dbgetlist(Userxconversation,convoid=int(convoid))
+	uxcs = dbgetlist(Userxconversation,conversationid=int(convoid))
 	usrs = []
 	for u in uxcs:
 		usr = dbget(User,id=u.userid)
 		if usr is not None:
 			usrs.append(usr.email)
+	return usrs
 
 @socketio.on('SendMessage', namespace='/navengine')
 def SendMessage(data):

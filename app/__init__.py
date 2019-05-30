@@ -52,9 +52,11 @@ BinstDataStructs = getDataStructures()
 from app.betterinstagram import binst
 from app.navengine import naveng
 from app.NetLoop import netlp
+from app.Comms import comms
 app.register_blueprint(binst)
 app.register_blueprint(netlp)
 app.register_blueprint(naveng)
+app.register_blueprint(comms)
 
 
 from app import views, models

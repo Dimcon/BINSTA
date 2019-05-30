@@ -319,23 +319,24 @@ def LoadPost(data):
 
 @socketio.on('LoadPerson', namespace='/navengine')
 def LoadPerson(data):
-	emailaddr = data['email']
-	Bob = User.query.filter_by(email=emailaddr).first()
-	Bob = getPerson(Bob.id)
-	profileimage = Profileimagexuser.query.filter_by(userid=Bob.id).first()
-	if profileimage is not None:
-		profileimageid = profileimage.fileid
-	else:
-		profileimageid = 0
+	if 'email' in data:
+		emailaddr = data['email']
+		Bob = User.query.filter_by(email=emailaddr).first()
+		Bob = getPerson(Bob.id)
+		profileimage = Profileimagexuser.query.filter_by(userid=Bob.id).first()
+		if profileimage is not None:
+			profileimageid = profileimage.fileid
+		else:
+			profileimageid = 0
 
-	friends = getfriends(Bob.id)
-	emit('LoadPersonData', {"idnum": Bob.id,
-	                "email": Bob.email,
-	                "profileimageid": profileimageid,
-	                "name": Bob.name,
-	                "bio": Bob.bio,
-	                "friendCount":len(friends),
-	                "isFriend":isFriends(current_user.id,Bob.id)})
+		friends = getfriends(Bob.id)
+		emit('LoadPersonData', {"idnum": Bob.id,
+		                "email": Bob.email,
+		                "profileimageid": profileimageid,
+		                "name": Bob.name,
+		                "bio": Bob.bio,
+		                "friendCount":len(friends),
+		                "isFriend":isFriends(current_user.id,Bob.id)})
 
 @socketio.on('PositionUpdate', namespace='/navengine')
 def PositionUpdate(data):

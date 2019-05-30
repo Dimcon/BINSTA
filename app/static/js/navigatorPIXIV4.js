@@ -51,6 +51,7 @@ var binstuimanager = []
 var postlinkmanager
 var networkLooper
 var nlwinput
+var comms
 
 var debugDisableUserContent = false
 
@@ -101,6 +102,7 @@ function setupV2() {
     loader = new NetworkLoader(new Vector(0,0))
     networkLooper = new NetworkLooper()
     nlwinput = new NLWInputHandler()
+    comms = new Comms()
 
     setupSocketIOCallbacks()
     let usersthatcanadd = [""]
@@ -176,11 +178,6 @@ function setupPIXI() {
 
     userCircleMask = new PIXI.Sprite()
     userCircleMask.addChild(Circlegraphic)
-
-
-
-
-
 }
 
 
@@ -213,6 +210,7 @@ function createTestMenu(pos) {
 function setupSocketIOCallbacks() {
     widgetManager.setupSocketCallbacks()
     peopleManager.setupSocketCallbacks()
+    comms.setupSocketCallbacks()
     networkLooper.registerSocketIORecievers()
     socket.on('Update', function(fromserver) {
         console.log("Got update from server")

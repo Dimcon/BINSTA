@@ -1,0 +1,119 @@
+
+
+<style>
+.commsview-open:hover #msglist {
+    height:calc(30rem);
+    transition: 0.3s;
+}
+
+#msglist {
+    height:calc(10rem);
+    transition: 0.3s;
+}
+
+.commsview-open:hover #convolist {
+    height:calc(33rem);
+    transition: 0.3s;
+}
+
+#convolist {
+    height:calc(13rem);
+    transition: 0.3s;
+}
+
+.nonoverflow {
+    max-height:-webkit-fill-available
+}
+
+.msg {
+    border-radius:5px;
+    line-height: 1.2;
+}
+
+.btn {
+   position:relative;
+}
+.btn[data-badge]:after {
+   content:attr(data-badge);
+   position:absolute;
+   bottom:0px;
+   right:0px;
+   font-size:.7em;
+   background:red;
+   color:white;
+   width:18px;height:18px;
+   text-align:center;
+   line-height:18px;
+   border-radius:50%;
+   box-shadow:0 0 1px #333;
+}
+
+
+</style>
+
+<div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">
+    Comms
+</div>
+<div id="CommsViewlistholder" class="ml-0 mr-0 thinscroll">
+    <div class="row pl-0 pr-0 ml-0 mr-0">
+        <div id="convoBtnHolder"
+             style="width:5rem;background-image: linear-gradient(to right, #333333cc ,#222222cc);"
+             class="pl-2 pr-2 ml-0 mr-0 text-light">
+            <div id="convolist" class="msglist pl-0 pr-0 ml-0 mr-0 thinscroll"
+             style="overflow-y:scroll;display: flex; flex-direction: column-reverse;overflow-x: hidden;">
+                <button type="button" data-badge="6" style="border-radius:10vw" class="w-75 ml-2 mr-2 mt-1 mb-1 btn btn-dark">
+                    5
+                </button>
+                <!--<div class="list-group-item text-light bg-dark mt-1 mb-1">tmp </div>-->
+                <!--<button type="button" style="border-radius:10vw" class="w-75 ml-2 mr-2 mt-1 mb-1 btn btn-dark">-->
+                <!--</button>-->
+
+                <!--<img style="border-radius:50px;height:3rem;width:3rem"-->
+                    <!--v-for="c in convos"-->
+                    <!--data-toggle="tooltip" data-placement="right" :title="convo.name">-->
+                <div v-for="c in convos">
+                    <convo-title-display v-on:childupdateconvo="updateConvo" v-bind:convo="c"></convo-title-display>
+                </div>
+
+            </div>
+            <button type="button" style="border-radius:10vw" class="w-75 ml-2 mr-2 mt-2 mb-1 btn btn-dark">+</button>
+        </div>
+        <div v-if="convos.length > 0 && showingConvo > 0" id="messagelistholder" class="thinscroll col pl-0 pr-0 ml-0 mr-0 text-light">
+            <div class="row d-flex justify-content-between"
+                style="background-image: linear-gradient(to bottom, #333333cc ,#222222cc);">
+                <div class="row">
+                    <button type="button" style="border-radius:10vw" class="ml-3 mr-1 mt-1 mb-1 btn btn-dark">
+                        -
+                    </button>
+                    <div class="text-light mt-1 mb-1 ml-1 mr-3">
+                        [[ getConvoName(getShownConvo()) ]]<br>
+                        <small class="badge badge-dark">[[ getConvoStatus(getShownConvo()) ]]</small>
+                    </div>
+                </div>
+                <button type="button" style="border-radius:10vw" class="ml-3 mr-3 mt-1 mb-1 btn btn-dark">
+                       ...
+                    </button>
+            </div>
+            <div id="msglist" class="msglist thinscroll list-group text-light"
+            style="overflow-y:scroll;display: flex; flex-direction: column-reverse;">
+
+                <convo-display v-if="convos.length > 0" :vuseremail="vuseremail" :convo="getShownConvo()" >
+
+                </convo-display>
+                <div v-else
+                     class="list-group-item msg alert alert-info mt-5 mb-5 ml-5 mr-5">
+                    You don't have any convos! Press the + button underneath the conversation list to start a new one!
+                </div>
+                    <!--<div class="list-group-item msg text-light bg-dark mt-2 mb-1 ml-1 mr-5">-->
+                    <!--</div>-->
+                    <!--<div class="list-group-item msg text-light text-align-right bg-dark mt-2 mb-1 ml-5 mr-1">tmp</div>-->
+            </div>
+            <div class=" mt-2 mb-2 row d-flex justify-content-between">
+                <div class="col">
+                <input class="mr-2 ml-2 form-control bg-dark text-light">
+                </div>
+                <button type="button" class="col-md-3 btn btn-dark">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
