@@ -1,6 +1,8 @@
 <link rel="stylesheet" href="static/css/croppie.css" />
 		<script src="static/js/Libraries/croppie.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
 <script src='static/js/PIXIV4/pixi.min.js'></script>
 <script src='static/js/Libraries/PIXI-extra-filters.js'></script>
 <script src='static/js/Libraries/PixiTextInput.js'></script>
@@ -50,7 +52,7 @@
 <script src='static/js/Libraries/croppiestuff.js'></script>
 <script src="static/js/socket.io/socket.io.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
 
 <script>
     var UserPosition = [{{ usercenterpos[0] }},{{ usercenterpos[1] }}]
@@ -522,7 +524,7 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
     <div class="row text-light w-100 h-100 d-flex justify-content-center">
 
         <div class=" pl-2 pr-2 d-flex justify-content-between">
-            <button id="msgbutton" class="btn uibtn" data-badge="6" onclick="javascript:hideshowmsgs()"><i class="fas fa-envelope"></i></button>
+            <button id="msgbutton" class="hasnotif btn uibtn" data-badge="6" onclick="javascript:hideshowmsgs()"><i class="fas fa-envelope"></i></button>
         </div>
         <div class=" pl-2 pr-2 d-flex justify-content-between">
             <button id="backbutton" class="btn uibtn" onclick="javascript:GoBackOneStep()"><i class="fas fa-undo"></i></button>
@@ -540,7 +542,7 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
             <button onclick="javascript:newPostClick()" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></i></button>
         </div>
         <div class="pl-2 pr-2 d-flex justify-content-between">
-            <button onclick="javascript:zoomClick()" type="button" id="zoombtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post">50</button>
+            <button onclick="javascript:zoomClick()" type="button" id="zoombtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-search-plus"></i> 30</button>
         </div>
 
         <!--<div class="col-md-5 align-content-center">-->
@@ -584,7 +586,7 @@ background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
             userNavigation.ZoomTo(1,60,true)
         }
         $("#zoombtn").html(display[i])
-        $("#zoombtn").html(clickzoomstops[i] + "x")
+        $("#zoombtn").html("<i class=\"fas fa-search-plus\"></i> " + clickzoomstops[i])
     }
 
     function newPostClick() {

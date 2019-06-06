@@ -122,6 +122,7 @@ class Conversation(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(256), index=True)
 	privacy = db.Column(db.Integer)
+	profileimageid = db.Column(db.Integer)
 
 class Cmessage(db.Model):
 	id = db.Column(db.Integer, primary_key=True)

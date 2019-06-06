@@ -30,10 +30,10 @@
     line-height: 1.2;
 }
 
-.btn {
+.hasnotif {
    position:relative;
 }
-.btn[data-badge]:after {
+.hasnotif[data-badge]:after {
    content:attr(data-badge);
    position:absolute;
    bottom:0px;
@@ -48,8 +48,77 @@
    box-shadow:0 0 1px #333;
 }
 
+.activemsgbkg {
+    background: #525252
+}
 
+.activemsgbkg:hover {
+   background: #404040
+}
+
+.inactivemsgbkg {
+    background: transparent
+}
+
+.inactivemsgbkg:hover {
+   background: #303030
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.hoverable-dark:hover {
+    background: #5f5f5f;
+    transition:0.2s;
+}
+
+.list-img {
+    width:3rem;
+    height:3rem;
+}
+.list-vertical-center {
+    margin-top:auto;
+    margin-bottom:auto;
+}
+
+.round {
+    border-radius: 50%;
+}
+
+.searchbar {
+  border-box: box-sizing;
+  font-size: 16px;
+  border:none;
+  padding: 14px 20px 12px 7px;
+}
+
+.searchbar:focus {
+    outline:none
+}
 </style>
+
+<script>
+    function AutoGrowTextArea(textField) {
+        //if (textField.clientHeight < textField.scrollHeight) {
+            //textField.style.height = textField.scrollHeight + "px";
+            //if (textField.clientHeight < textField.scrollHeight) {
+                //textField.style.height = (textField.scrollHeight * 2 - textField.clientHeight) + "px";
+            //}
+        //}
+        var text = jQuery(textField).val(),
+        // look for any "\n" occurences
+        matches = text.match(/\n/g),
+        breaks = matches ? matches.length : 0;
+        breaks = Math.min(breaks,8)
+        if (breaks > 0) {
+            breaks = breaks + 1
+            jQuery(textField).attr('rows',breaks);
+        } else {
+            jQuery(textField).attr('rows',1);
+        }
+    }
+</script>
 
 <div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">
     Comms
@@ -58,41 +127,96 @@
     <div class="row pl-0 pr-0 ml-0 mr-0">
         <div id="convoBtnHolder"
              style="width:5rem;background-image: linear-gradient(to right, #333333cc ,#222222cc);"
-             class="pl-2 pr-2 ml-0 mr-0 text-light">
+             class="ml-0 mr-0 text-light">
             <div id="convolist" class="msglist pl-0 pr-0 ml-0 mr-0 thinscroll"
-             style="overflow-y:scroll;display: flex; flex-direction: column-reverse;overflow-x: hidden;">
-                <button type="button" data-badge="6" style="border-radius:10vw" class="w-75 ml-2 mr-2 mt-1 mb-1 btn btn-dark">
-                    5
-                </button>
-                <!--<div class="list-group-item text-light bg-dark mt-1 mb-1">tmp </div>-->
-                <!--<button type="button" style="border-radius:10vw" class="w-75 ml-2 mr-2 mt-1 mb-1 btn btn-dark">-->
-                <!--</button>-->
+             style="overflow-y:auto;display: flex; flex-direction: column-reverse;">
+                <div v-if="showingConvo == -2">
+                    <convo-title-display  v-bind:convo="facadeConvo"></convo-title-display>
+                </div>
 
-                <!--<img style="border-radius:50px;height:3rem;width:3rem"-->
-                    <!--v-for="c in convos"-->
-                    <!--data-toggle="tooltip" data-placement="right" :title="convo.name">-->
                 <div v-for="c in convos">
                     <convo-title-display v-on:childupdateconvo="updateConvo" v-bind:convo="c"></convo-title-display>
                 </div>
 
             </div>
-            <button type="button" style="border-radius:10vw" class="w-75 ml-2 mr-2 mt-2 mb-1 btn btn-dark">+</button>
+            <div class="w-75 ml-2 mr-2 mt-2 mb-2 d-flex justify-content-center">
+                <div class="dropdown">
+                    <button type="button"
+                            style="border-radius:10vw" data-toggle="dropdown"
+                            onclick="javascript:document.getElementById('contactsearch').focus()"
+                            class="mb-2 btn btn-dark ">
+                        <i class="fas fa-cat"></i>
+                    </button>
+                    <div class="dropdown-menu bg-dark text-light"
+                         style="max-width: 30rem;width: max-content;">
+                        <div class="w-100 d-flex justify-content-center">
+                           <i class="fas fa-comments mb-2"></i>
+                        </div>
+                        <div class="d-flex justify-content-between" style="border-bottom: 1px solid #ddd;border-top: 1px solid #ddd;">
+                            <i  class="ml-4 mr-2 mt-3 pt-1 fas fa-search"></i>
+                            <input v-on:keyup="updateSearch" v-model="contactSearchInput" type="text" class="searchbar w-100 bg-dark text-light"
+                                   placeholder="Search.." id="contactsearch">
+                        </div>
+                        <div class="thinscroll" style="max-height:50vh;overflow-y:scroll">
+                            <a v-for="friend in friends"
+                               v-if="friend.showInSearch"
+                               class="d-flex clickable hoverable-dark pl-2 pr-2 pb-1 pt-1 justify-content-between"
+                                v-on:click="clickContact(friend.email)">
+                                <img style='border-radius: 10vw;' class="list-img" :src="friend.imgsrc">
+                                <div class="w-100 list-vertical-center ml-2"
+                                    style="line-height:1.1">
+                                        [[ friend.name ]]<br>
+                                    <small class="text-secondary">
+                                        [[ friend.email ]]
+                                    </small>
+                                </div>
+                                <small class="badge badge-dark list-vertical-center ml-3">[[ friend.isonline ]]</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div v-if="convos.length > 0 && showingConvo > 0" id="messagelistholder" class="thinscroll col pl-0 pr-0 ml-0 mr-0 text-light">
+        <div v-if="(convos.length > 0 && showingConvo > 0) || showingConvo == -2" style="overflow-x: scroll;"
+             id="messagelistholder"
+             class="thinscroll col pl-0 pr-0 ml-0 mr-0 text-light">
             <div class="row d-flex justify-content-between"
                 style="background-image: linear-gradient(to bottom, #333333cc ,#222222cc);">
                 <div class="row">
-                    <button type="button" style="border-radius:10vw" class="ml-3 mr-1 mt-1 mb-1 btn btn-dark">
-                        -
-                    </button>
-                    <div class="text-light mt-1 mb-1 ml-1 mr-3">
-                        [[ getConvoName(getShownConvo()) ]]<br>
-                        <small class="badge badge-dark">[[ getConvoStatus(getShownConvo()) ]]</small>
+                    <!--<button type="button" style="border-radius:10vw" class="ml-3 mr-1 mt-1 mb-1 btn btn-dark">-->
+                        <!-- - -->
+                    <!--</button>-->
+                    <div class="d-flex w-100 justify-content-center">
+                        <img :src='getShownConvo().imgsrc'
+                            style='border-radius: 0.4rem;'
+                            class='clickable list-img ml-3 mr-2 mt-1 mb-1'>
+
+                        <div class="text-light list-vertical-center ml-1 mr-3" style="line-height: 1.3;">
+                            [[ getConvoName(getShownConvo()) ]]
+                            <br><small class="badge badge-dark">
+                                [[ getConvoStatus(getShownConvo()) ]]
+                            </small>
+                        </div>
                     </div>
                 </div>
-                <button type="button" style="border-radius:10vw" class="ml-3 mr-3 mt-1 mb-1 btn btn-dark">
-                       ...
+                <div class="row list-vertical-center">
+                    <button type="button" style="border-radius:10vw" class="ml-3 mr-1 mt-1 mb-1 btn btn-dark">
+                           <i  class="fas fa-search"></i>
                     </button>
+                    <!--<button type="button" style="border-radius:10vw" class="ml-1 mr-3 mt-1 mb-1 btn btn-dark">-->
+                        <!--<i class="fas fa-hamburger"></i>-->
+                    <!--</button>-->
+
+
+                    <div v-if="showingConvo > 0" class="dropdown">
+                        <button type="button" data-toggle="dropdown" style="border-radius:10vw" class="ml-1 mr-3 mt-1 mb-1 btn btn-dark">
+                            <i class="fas fa-hamburger"></i>
+                        </button>
+                        <div class="dropdown-menu bg-dark text-light">
+                            <a v-on:click="deleteConvo" class="dropdown-item bg-dark text-light clickable" ><i class="fas fa-trash"></i> Delete conversation</a>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="msglist" class="msglist thinscroll list-group text-light"
             style="overflow-y:scroll;display: flex; flex-direction: column-reverse;">
@@ -104,15 +228,22 @@
                      class="list-group-item msg alert alert-info mt-5 mb-5 ml-5 mr-5">
                     You don't have any convos! Press the + button underneath the conversation list to start a new one!
                 </div>
-                    <!--<div class="list-group-item msg text-light bg-dark mt-2 mb-1 ml-1 mr-5">-->
-                    <!--</div>-->
-                    <!--<div class="list-group-item msg text-light text-align-right bg-dark mt-2 mb-1 ml-5 mr-1">tmp</div>-->
             </div>
             <div class=" mt-2 mb-2 row d-flex justify-content-between">
                 <div class="col">
-                <input class="mr-2 ml-2 form-control bg-dark text-light">
+                    <textarea v-model="textinput" rows="1" onkeyup="AutoGrowTextArea(this)"
+                              class="mr-2 ml-2 form-control bg-dark text-light"
+                            style="overflow-y:auto;resize: none;"></textarea>
                 </div>
-                <button type="button" class="col-md-3 btn btn-dark">Send</button>
+                <div class="mr-4 ml-2">
+                    <button v-on:click="sendMessage" type="button" class="btn btn-dark round"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+        <div v-else
+             class="col  mt-5 mb-5 ml-5 mr-5">
+            <div class="alert alert-info">
+                Use the circles on the left to open a conversation!
             </div>
         </div>
     </div>

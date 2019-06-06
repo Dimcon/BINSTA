@@ -53,6 +53,19 @@ def getPerson(userid):
 	persontmp.isfriends = isFriends(current_user.id,userid)
 	return persontmp
 
+def addPersonToUser(user):
+	persontmp = user
+	# EXPENSIVE
+	#persontmp.display = profiledisp(user.id)
+	profileimage = Profileimagexuser.query.filter_by(userid=user.id).first()
+	if profileimage is not None:
+		persontmp.profileimageid = profileimage.fileid
+	else:
+		persontmp.profileimageid = 0
+	# THIS IS TOO EXPENSIVE
+	#persontmp.isfriends = isFriends(current_user.id, user.id)
+	return persontmp
+
 def PostsToCards(posts):
 	class postcard:
 		details = ''
@@ -91,6 +104,8 @@ def isPostSeen(PostID, userid):
 	return False
 
 def getfriends(userid):
+	# HOLY SMOAKS THIS IS EXPENSIVVE
+	# TODO: OPTIMISE THE SHIT OUT OF THIS
 	connectionss = query(Connection).filter(\
 		(Connection.user1id == userid) | (Connection.user2id == userid)\
 		)

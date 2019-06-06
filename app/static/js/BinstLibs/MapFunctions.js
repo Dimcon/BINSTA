@@ -148,7 +148,7 @@ class UserNavigation {
                 if (zoomdisablesinteraction) {
                     interactiondisabled = false
                 }
-                $('#zoomslider').val(100 * (((unitsize - 1) / (maxzoom - 1))))
+                $('#zoomslider').val(100 * (((unitsize - 1) / (maxzoom - 1))) )
                 userNavigation.positionchanged()
                 invalidate()
             }

@@ -305,7 +305,7 @@ function onReleaseClick(e) {
 }
 
 var zoomstops = [1,1.5,2,3,5,9.7,12.288,15.36,19.2,24,30,37.5,46.8,75,100]
-let display =   ["1x","5x","10x","15x","25x","50x","75x","90x","100x"]
+let display =   ["1","5","10","15","25","50","75","90","100"]
 var zoomstoppos = 10
 var MouseZoomAnim = "NaN"
 
@@ -330,7 +330,7 @@ function mouseWheel(event) {
             MouseZoomAnim.stop()
         }
         MouseZoomAnim = userNavigation.ZoomTo(zoomstops[zoomstoppos],60,true)
-        $("#zoombtn").html(zoomstops[zoomstoppos] + "x")
+        $("#zoombtn").html("<i class=\"fas fa-search-plus\"></i> " + zoomstops[zoomstoppos])
 }
 
 function doubleClicked() {

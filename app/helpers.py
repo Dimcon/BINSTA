@@ -170,7 +170,7 @@ def soutd(output, debuglevelP=5):
 	#if 'debug_level' in session:
 	#	debuglevel = int(session['debug_level'])
 	#else:
-	debuglevel = 1
+	debuglevel = 5
 	prepends = ["", "LMS-[Error] ", "LMS-[Status] ", "LMS-[V] ", "LMS-[VV] ", "LMS-[>] "]
 	output = str(prepends[debuglevelP]) + str(output)
 	if debuglevelP <= debuglevel:
