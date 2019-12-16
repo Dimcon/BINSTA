@@ -75,7 +75,7 @@ class UserpostClass(positionalItemBaseTemplate):
 		pushPositionUpdateToRedis(poststring, position, size, coord.id, postid, "NewPosition", str(coord.id), current_user.email)
 
 
-	def deleteObject(self,objectid):
+	def deleteObject(self,objectid,coordid):
 		post = dbget(Userpost, id=int(objectid))
 		coord = dbget(Coordinate, backreftype=3, backrefid=int(post.id))
 		db.session.delete(post)

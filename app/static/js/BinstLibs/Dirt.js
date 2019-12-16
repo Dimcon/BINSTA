@@ -4,7 +4,33 @@ class Dirt {
 
     constructor() {
         this.gridGraphic = new PIXI.Graphics()
-        stage.addChild(this.gridGraphic);
+        this.gridsprite = new PIXI.Sprite()
+        this.gridsprite.addChild(this.gridGraphic);
+        this.gridsprite.interactive = true
+        this.gridsprite.on("pointerdown", function (e) {
+            return Dirt.rightClickHandler(e)
+        }).on("touchstart", function (e) {
+            return Dirt.rightClickHandler(e)
+        })
+        stage.addChild(this.gridsprite);
+    }
+
+    // This is not a great idea. But alas it may be the only way to get the desired result
+    //      Use the background sprite as the default right click handler
+    //      because it is more reliable than using the default javascript
+    //      click handler which can't easily tell the difference between
+    //      a sprite click and a background click
+    static rightClickHandler(e) {
+        if (e.data.originalEvent.button == 2) {
+            let posX = e.data.originalEvent.pageX - $("#binst-canvas").position().left
+            let posY = e.data.originalEvent.pageY - $("#binst-canvas").position().top;
+            let popAt = new Vector(0, 0)
+            popAt.x = (Uservector.x + (posX)) / unitsize
+            popAt.y = (Uservector.y + (posY)) / unitsize
+            createItemMenu(popAt)
+            return true
+        }
+        return false
     }
 
     beginGrid() {
@@ -31,14 +57,12 @@ class Dirt {
     }
 
     drawGrid() {
-        //push()
         this.beginGrid()
         this.gridGraphic.lineStyle(0, 0xffffff, 1);
         this.gridGraphic.beginFill(0x000000);
         this.gridGraphic.drawRect (0, 0, vecScreen.x, vecScreen.y)
         let startpoint = new Vector(-Uservector.x % spacer, -Uservector.y % spacer)
         let gridvec = new Vector(parseInt(startpoint.x),parseInt(startpoint.y))
-        //strokeWeight(2)
         this.lcolgrid(2,200)
         let shoulddraw = true
         let valcomp = 2
@@ -51,22 +75,21 @@ class Dirt {
                 posx = posx + 1
             }
             if (parseInt(posx % (100 * spacer)) < spacer / valcomp) {
-                //stroke(200);
                 this.lcolgrid(2,200)
             } else if (posx % (25 * spacer) < spacer / valcomp) {
-                //stroke(120);
+                if (unitsize < 0.4) {
+                    shoulddraw = false
+                }
                 this.lcolgrid(2,120)
             } else if (posx % (5 * spacer) < spacer / valcomp) {
                 if (unitsize < 1.3) {
                     shoulddraw = false
                 }
-                //stroke(60);
                 this.lcolgrid(2,60)
             } else {
                 if (unitsize < 4) {
                     shoulddraw = false
                 }
-                //stroke(30);
                 this.lcolgrid(2,30)
             }
             if (shoulddraw) {
@@ -84,22 +107,21 @@ class Dirt {
                 posy = posy + 1
             }
             if (posy % (100 * spacer) < spacer / valcomp) {
-                //stroke(200);
                 this.lcolgrid(2,200)
             } else if (posy % (25 * spacer) < spacer / valcomp) {
-                //stroke(120);
+                if (unitsize < 0.4) {
+                    shoulddraw = false
+                }
                 this.lcolgrid(2,120)
             } else if (posy % (5 * spacer) < spacer / valcomp) {
                 if (unitsize < 1.3) {
                     shoulddraw = false
                 }
-                //stroke(60);
                 this.lcolgrid(2,60)
             } else {
                 if (unitsize < 4) {
                     shoulddraw = false
                 }
-                //stroke(30);
                 this.lcolgrid(2,30)
             }
 
@@ -114,3 +136,5 @@ class Dirt {
     }
 
 }
+
+//# sourceURL=Dirt.js

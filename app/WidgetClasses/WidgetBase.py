@@ -29,5 +29,5 @@ class positionalItemBaseTemplate(object):
 	def updateObjectPosition(self,objectid,position,size):
 		pass
 
-	def deleteObject(self,objectid):
+	def deleteObject(self,objectid, coordid):
 		pass

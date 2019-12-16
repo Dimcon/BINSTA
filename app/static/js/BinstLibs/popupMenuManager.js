@@ -45,6 +45,7 @@ class PopupMenuManager {
     }
 
     endMenu() {
+        let tmpscale = 50 - unitsize
         let menu = {}
         menu.pos = this.currentMenuOpts.pos
         menu.truepos = this.currentMenuOpts.truepos
@@ -160,7 +161,7 @@ class PopupMenuManager {
         let newvecposition = ScreenCoordToPlaneCoord(menu.pos)
         let fX = ScreenSizeToPlaneSize(menu.dimensions).x / 100
         let fY = ScreenSizeToPlaneSize(menu.dimensions).y / 100
-        let scale = unitsize / 50
+        let scale = 0.6
         menu.sprite.position.x = newvecposition.x
         menu.sprite.position.y = newvecposition.y
         menu.sprite.scale.x = scale

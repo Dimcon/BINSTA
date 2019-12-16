@@ -63,8 +63,8 @@ function animProfileLineOut(DataComponent) {
 function getScaleText(sinput) {
     let maxcharwidthadjuster = 1000
     let mincharwidthadjuster = 12
-    let minTS = 10
-    let maxTS = 35
+    let minTS = 30
+    let maxTS = 50
     let length = sinput.length
     let range = (maxcharwidthadjuster + mincharwidthadjuster)
     let adjuster = 1 - Math.sin(length / range)
@@ -114,6 +114,20 @@ class WidgetManager {
             this.widgets[listofstructs[item].ItemType + listofstructs[item].ItemSubclassID].setupSocketCallbacks()
         }
         this.setupSprites()
+    }
+
+    PopulateWithItem(Item) {
+        let newcomponent = new DataComponent(Item)
+        let itemClassifier = Item.type
+        if (Item.type == "Userpost") {
+            itemClassifier = Item.type + Item.posttype
+        }
+        if (itemClassifier in this.widgets) {
+            if (Item.coordid in this.widgets[itemClassifier].DataComponents) {
+                removeAndDestroySprite(this.widgets[itemClassifier].DataComponents[Item.coordid].sprite)
+            }
+            this.widgets[itemClassifier].initDataStructure(newcomponent, Item)
+        }
     }
 
     setupSprites() {
@@ -281,9 +295,10 @@ class WidgetManager {
         datacomponent.dirty = true
         datacomponent.dirtyCounter = 5
         datacomponent.maxdrawscale = 1
-        datacomponent.dragdata = {}
-        datacomponent.dragdata.startedDrag = false
-        datacomponent.dragdata.isdragging = false
+        datacomponent.dragdata = {
+            "startedDrag":false,
+            "isdragging":false
+        }
         datacomponent.hasMouseMovehandler = false
         datacomponent.MouseIsInside = false
         datacomponent.MouseIsInsidevalidated = false
@@ -302,7 +317,7 @@ class WidgetManager {
                 "text":"X",
             }
         }
-        datacomponent.owned = () => datacomponent.owneremail == useremail
+        datacomponent.owned = () => datacomponent.owneremail === useremail
         datacomponent.type = ""
         datacomponent.ServiceBooleans = {
             "LinkManagerDirty": true
@@ -399,6 +414,8 @@ class WidgetManager {
             dataComponent.sprite.addChild(loadedimage)
         },DataComponent)
    }
+
+
 
     setupDataComponentReportButton(DataComponent, posEndx, posEndy) {
         let textstyle = new PIXI.TextStyle({
@@ -507,7 +524,7 @@ class WidgetManager {
     }
 
     deleteClick(DataComponent) {
-        if (confirm("Jeez Kaveer. Took you long enough. You sure buddy?")) {
+        if (confirm("Are you sure you would like to DELYEET this?")) {
             $.post("/delete",{
             	objecttype: "coordinate",
             	objectid:DataComponent.coordinateID,
@@ -522,20 +539,6 @@ class WidgetManager {
                 diserror("Woah okay we can't find the internet. Uhm do it again?")
             })
             console.log ("DELETING")
-        }
-    }
-
-    PopulateWithItem(Item) {
-        let newcomponent = new DataComponent(Item)
-        let itemClassifier = Item.type
-        if (Item.type == "Userpost") {
-            itemClassifier = Item.type + Item.posttype
-        }
-        if (itemClassifier in this.widgets) {
-            if (Item.coordid in this.widgets[itemClassifier].DataComponents) {
-                removeAndDestroySprite(this.widgets[itemClassifier].DataComponents[Item.coordid].sprite)
-            }
-            this.widgets[itemClassifier].initDataStructure(newcomponent,Item)
         }
     }
 

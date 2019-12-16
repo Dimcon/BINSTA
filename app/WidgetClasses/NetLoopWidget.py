@@ -1,3 +1,4 @@
+from app import db
 from app.WidgetClasses.WidgetBase import *
 from app.ClientSocketUpdater import *
 from app.helpers import *
@@ -35,7 +36,7 @@ class NetoLoopWidgetClass(positionalItemBaseTemplate):
 					indexed = "true"
 				else:
 					indexed = "false"
-				dbhset(hashkey, key, data[key], indexed, datetime.datetime.now().isoformat())
+				dbhset(hashkey, key, unicode(data[key]), indexed, datetime.datetime.now().isoformat())
 		dbhset(hashkey, "OwnerEmail", current_user.email, "true", datetime.datetime.now().isoformat())
 		emit('instanceCreated', {'instanceID': instance.id, 'instanceType':type, 'applicationID': appid})
 
@@ -79,13 +80,12 @@ class NetoLoopWidgetClass(positionalItemBaseTemplate):
 		pushPositionUpdateToRedis(poststring, position, size, coord.id, instance.id, "NewPosition", str(coord.id), current_user.email)
 
 
-	def deleteObject(self,objectid):
+	def deleteObject(self,objectid, coordid):
 		# TODO: You're gonna want this in there buddy..
-		pass
-		#post = dbget(Userpost, id=int(objectid))
-		#coord = dbget(Coordinate, backreftype=3, backrefid=int(post.id))
-		#db.session.delete(post)
-		#db.session.delete(coord)
-		#position = coord.coords.split(";")
-		#pushPositionUpdateToRedis(self.getItemString(), [position[0],position[1]], [0,0],coord.id, post.id, "Deleted", "What more do you need?", current_user.email)
-		#return jsonify({"message": "Success"})
+		# TODO: You're gonna want this to reflect a non hardcoded appid
+		instance = dbget(NetInstance, id=objectid)
+		db.session.delete(instance)
+		hashkey = "dataStoreBINSTA:" + str(objectid) + ":"
+		dbhdelete(hashkey)
+		pushPositionUpdateToRedis(self.getItemString(), [0,0], [0,0], coordid, coordid, "Deleted", coordid, current_user.email)
+		return jsonify({"message": "Success"})

@@ -123,6 +123,7 @@ class NetComponent {
             }
         }
         this.onCreate()
+        invalidate()
     }
     PRVSync(hashdata) {
             // TODO: Need to update server to set times on a per key basis.
@@ -132,8 +133,9 @@ class NetComponent {
             let keyindexes = {}
             for (let key in hashdata) {
                 let kval = key
-                if (kval.length > 9 && kval.substring(kval.length - 9,kval.length-1) == ":indexed") {
-                    let tkey = kval.substring(0,kval.length - 9)
+                let indexword = kval.substring(kval.length - 8, kval.length)
+                if (kval.length > 8 && indexword === ":indexed") {
+                    let tkey = kval.substring(0,kval.length - 8)
                     keyindexes[tkey] = hashdata[key]
                 } else {
                     dataList[key] = hashdata[key]
@@ -158,8 +160,10 @@ class NetComponent {
         } else if (key in this.iKVMap) {
             oldval= this.iKVMap[key]
             this.iKVMap[key] = value
+        } else {
+            return
         }
-        this.keyChangedFrom(key,oldval,value)
+        this.onKeyChanged(key,oldval,value)
     }
 
     PRVSET(key, value, indexed) {
@@ -173,8 +177,11 @@ class NetComponent {
     PRVonKeyUpdateCompleted(key) {
         if (key in this.SendList) {
             let slkey = this.SendList[key]
+            let oldval = this.get(key)
             this.PRVSET(key,slkey["key"],slkey.indexed)
+            let newval = slkey["key"]
             delete this.SendList[key]
+            this.onKeyChanged(key, oldval, newval)
         }
     }
 
@@ -233,7 +240,7 @@ class NetComponent {
         return !key in this.SendList
     }
 
-    onKeyChangedExternally(key, OldValue, NewValue) {
+    onKeyChanged(key, OldValue, NewValue) {
 
     }
 

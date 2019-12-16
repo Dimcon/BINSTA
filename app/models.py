@@ -37,6 +37,7 @@ class File(db.Model):
 	purposeid = db.Column(db.Integer)
 	#1 = Profile image
 	#2 = UserPostImage
+	#3 = PostNLW file
 
 
 class Seen(db.Model):
@@ -238,3 +239,10 @@ class Kvpair(db.Model):
 	key = db.Column(db.Text, index=True)
 	value = db.Column(db.Text)
 	indexed = db.Column(db.Integer, index=True)
+	
+class Pilltaken(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	userid = db.Column(db.Integer)
+	datetime = db.Column(db.DateTime)
+	name = db.Column(db.String(256))
+	additional = db.Column(db.String(2046))

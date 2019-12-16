@@ -1,8 +1,11 @@
+
 <link rel="stylesheet" href="static/css/croppie.css" />
-		<script src="static/js/Libraries/croppie.min.js"></script>
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/npm/emoji-button@latest/dist/index.min.js"></script>
+<script src="static/js/Libraries/croppie.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-
+<script src="static/js/Libraries/hashes.js"></script>
 <script src='static/js/PIXIV4/pixi.min.js'></script>
 <script src='static/js/Libraries/PIXI-extra-filters.js'></script>
 <script src='static/js/Libraries/PixiTextInput.js'></script>
@@ -16,6 +19,8 @@
 <script src='static/js/Widgets/FenceWidget.js'></script>
 <script src='static/js/Widgets/NetLoopWidget.js'></script>
 
+<!--<script src='/pickers'></script>-->
+
 <script src='static/js/BinstLibs/Ripples.js'></script>
 <script src='static/js/BinstLibs/WidgetManager.js'></script>
 <script src='static/js/BinstLibs/NetworkLoader.js'></script>
@@ -26,6 +31,7 @@
 <script src='static/js/BinstLibs/PostLinkManager.js'></script>
 <script src='static/js/BinstLibs/NetworkLooper.js'></script>
 <script src='static/js/BinstLibs/Comms.js'></script>
+<script src='static/js/BinstLibs/binstgraphics.js'></script>
 
 <script src='static/js/BinstUI-Elements/BinstUIManager.js'></script>
 <script src='static/js/BinstUI-Elements/NewPostUI.js'></script>
@@ -43,7 +49,8 @@
 <script src='static/js/BinstLibs/Dirt.js'></script>
 
 <script src='static/js/NetLoopWidgets/TextPostNLW.js'></script>
-<script src='static/js/NetLoopWidgets/TextContainNLW.js'></script>
+<script src='static/js/NetLoopWidgets/widgetList.js'></script>
+<!--<script src='static/js/NetLoopWidgets/TextContainNLW/TextContainNLW.js'></script>-->
 
 <script src='static/js/Libraries/EZGUI_PIXI/EZGUI.js'></script>
 <script src='static/js/EZGUI-layouts/NewPostLayout.js'></script>
@@ -55,6 +62,8 @@
 
 
 <script>
+    //TODO: This whole file needs to be cleaned up.
+
     var UserPosition = [{{ usercenterpos[0] }},{{ usercenterpos[1] }}]
     var tmpimagedat = [0,"",""]
     var hasPlacedProfile = {{ hasplacedprofile }}
@@ -67,6 +76,40 @@
     $(document).ready(function() {
         setup()
     });
+
+    async function loadJavascriptFromUrl(url, onSuccess) {
+        await $.getScript(url, onSuccess);
+    }
+
+    var loadedElemIDCounter = 0
+
+    async function insertHtmlFromUrl(url) {
+        loadedElemIDCounter += 1
+        let newelemid = `floadedelem-${loadedElemIDCounter}`
+        let newelem = `<div id="${newelemid}"></div>`
+        $('#JSLoadHere').append(newelem).ready(function () {
+            $(`#${newelemid}`).load(url)
+        });
+    }
+
+    function insertHtmlFromstring(html) {
+        loadedElemIDCounter += 1
+        let newelemid = `floadedelem-${loadedElemIDCounter}`
+        let newelem = `<div id="${newelemid}"></div>`
+        $('#JSLoadHere').append(newelem).ready(function () {
+            $(`#${newelemid}`).html(html)
+        });
+    }
+
+    function replacePlaceholderWithHtml(html, placeholderSelector) {
+        $(placeholderSelector).empty()
+        loadedElemIDCounter += 1
+        let newelemid = `floadedelem-${loadedElemIDCounter}`
+        let newelem = `<div id="${newelemid}"></div>`
+        $(placeholderSelector).append(newelem).ready(function () {
+            $(`#${newelemid}`).html(html)
+        });
+    }
 
     function loadedload() {
         jQuery.extend(jQuery.expr[':'], {
@@ -129,6 +172,7 @@
         setInterval(RenderLoop,16)
         setInterval(tickHistory,1000)
         setInterval(networkLooper.pollForUpdatedData,networkLooper.pollInterval)
+        insertHtmlFromUrl("/pickers")
     }
 
 
@@ -342,16 +386,69 @@ body { background-color: #000000; }
     <canvas id="binst-canvas" style="width:100vw;height:100vh" width="100vw" height="100vh"></canvas>
   </div>
 
-<div id="textinput1"
+<script>
+    function openNewPostWindow() {
+        $("#newItem").removeClass("hidden")
+    }
+
+    function closeNewPostWindow() {
+        $("#newItem").addClass("hidden")
+    }
+</script>
+
+<div id="newItem"
 style="
 position:absolute;
-left:calc(50vw - 20vw);
-top:calc(50vh - 20vw);
-width:calc(20vw * 2);
-height:calc(20vw * 2);
+bottom:2rem;
+top: 6rem;
+left: 2rem;
+right: 2rem;
+height:60vh;
+overflow-y: auto;
 " class="hidden">
-    <div class="card bg-dark text-light w-100 h-100">
-        <div class="row">
+    <div class="row d-flex justify-content-center">
+    <div class="card text-white bg-dark col-md-8">
+        <div  class="card-body">
+            <h3 class="mb-4 w-100 text-center">Add Item</h3>
+            <div id="newItembody" class="w-100 d-flex justify-content-center flex-wrap">
+            </div>
+            <button onclick="javascript:closeNewPostWindow()" class="mt-3 btn btn-dark btn-block">
+                Cancel
+            </button>
+        </div>
+    </div>
+    </div>
+</div>
+
+<div style="position:absolute">
+    <div style="position: relative" id="JSLoadHere">
+    </div>
+</div>
+
+<div id="getString"
+     style="
+position:absolute;
+bottom:2rem;
+top: 6rem;
+left: 2rem;
+right: 2rem;
+height:60vh;
+overflow-y: auto;
+" class="hidden">
+    <div class="row d-flex justify-content-center">
+        <div class="card text-white bg-dark col-md-5">
+            <div class="card-body">
+                <h3 id="getStringHeader" class="mb-4 w-100 text-center"></h3>
+                <div id="newStringBody" class="w-100 d-flex justify-content-center flex-wrap">
+                    <textarea class="form-control" id="getStringInput"></textarea>
+                </div>
+                <button onclick="javascript:cancelCreate()" class="mt-3 btn btn-dark">
+                    Cancel
+                </button>
+                <button onclick="javascript:startNextInput()" class="mt-3 btn btn-primary">
+                    Accept
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -361,7 +458,7 @@ style="
 position:absolute;
 bottom:2rem;
 height:calc(12rem);
-" class="row col-md-5 d-flex w-100 justify-content-center hidden">
+" class="row col-md-5 d-flex w-100 justify-content-center hidden ">
     <div class="card bg-dark text-light w-100 h-100">
         <div class="row mt-2 p-1 d-flex w-100 justify-content-center">
             <h3>Create new Post</h3>
@@ -475,19 +572,28 @@ height:calc(30rem);
     </div>
 </div>
 
-
-
 <style>
 .uibtn {
     border-radius:10vw;
     background:#383838;
     color:#aaaaaa;
+    padding: .375rem .6rem;
 }
 
 .statusbtn {
     border-radius:10vw;
     background:#38383855;
     color:#aaaaaa;
+}
+
+.baselinebuttons {
+    border-radius: 5rem;
+    border: 5px solid #505c6a;
+}
+
+.bbdisconnected {
+    border-radius: 5rem;
+    border: 5px solid #ff000055;
 }
 
 .disconnected {
@@ -516,32 +622,33 @@ height:calc(30rem);
      style="
 position:absolute;
 bottom:0rem;
-width:100vw;
-height:calc(4rem);
-background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);"
-     class="row d-flex justify-content-center">
-<div class="col-md-12 pb-3 pt-1">
+
+background: #383838;
+'background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);
+"
+     class="row d-flex mb-2 justify-content-center baselinebuttons">
+<div class="col-md-12 pb-2 pt-2">
     <div class="row text-light w-100 h-100 d-flex justify-content-center">
 
-        <div class=" pl-2 pr-2 d-flex justify-content-between">
+        <div class="pr-0">
             <button id="msgbutton" class="hasnotif btn uibtn" data-badge="6" onclick="javascript:hideshowmsgs()"><i class="fas fa-envelope"></i></button>
         </div>
-        <div class=" pl-2 pr-2 d-flex justify-content-between">
+        <div class=" pl-0 pr-0 ">
             <button id="backbutton" class="btn uibtn" onclick="javascript:GoBackOneStep()"><i class="fas fa-undo"></i></button>
         </div>
-        <div class=" pl-2 pr-2 d-flex justify-content-between">
+        <div class=" pl-0 pr-0 d-flex justify-content-between">
             <button class="btn uibtn" onclick="javascript:userNavigation.gotoprofile()"><i class="fas fa-home"></i></button>
         </div>
         <div class="pl-2 pr-2 d-flex justify-content-between">
             <input id="CoordinateEditor" onblur="enteredNewCoord();" class="coordeditor form-control btn btn-outline-light" style="" value="::">
         </div>
-        <div class="pl-2 pr-2 d-flex justify-content-between">
+        <div class="pl-0 pr-0 d-flex justify-content-between">
             <button type="button" id="statusbtn" class="btn statusbtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Connection status"><i class="fas fa-satellite"></i></button>
         </div>
-        <div class="pl-2 pr-2 d-flex justify-content-between">
-            <button onclick="javascript:newPostClick()" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></i></button>
+        <div class="pl-0 pr-0 d-flex justify-content-between">
+            <button onclick="javascript:openNewPostWindow()" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></img></button>
         </div>
-        <div class="pl-2 pr-2 d-flex justify-content-between">
+        <div class="pl-0 d-flex justify-content-between">
             <button onclick="javascript:zoomClick()" type="button" id="zoombtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-search-plus"></i> 30</button>
         </div>
 

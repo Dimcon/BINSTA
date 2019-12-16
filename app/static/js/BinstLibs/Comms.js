@@ -1,5 +1,11 @@
 
 
+function isEmailInFriendList(email) {
+    // TODO: This is not reliable. Needs proper framework.
+    return friendEmails.indexOf(email) >= 0
+}
+
+var friendEmails = []
 class Comms {
     constructor() {
         this.vm = null
@@ -10,6 +16,7 @@ class Comms {
         this.waitingForConvoWithID = 0
         this.FoundConvoWithID = false
         //setInterval(this.sendPoll,3000)
+        // Use this for quickly determining if somebody is a friend
     }
 
     sendPoll() {
@@ -83,9 +90,12 @@ class Comms {
     }
 
     parseFriends(friends) {
+        delete this.friendEmails
+        friendEmails = []
         for (let c = 0;c < friends.length;c++) {
             let friend = friends[c]
             friend.showInSearch = true
+            friendEmails.push(friend.email)
             if (friend.profileimageid > 0) {
                 friend.imgsrc = "/getimageid-" + friend.profileimageid
             } else {

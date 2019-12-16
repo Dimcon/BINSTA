@@ -139,6 +139,7 @@ def newuserimagepost():
 	#imgByteArr = imgByteArr.getvalue()
 
 	#imgbytes = getResizedImageBase64ToBinary(request.form['file'], 900, 900)
+	
 	imgbytes = getBinaryFromBase64(request.form['file'])
 	file = File(details="jpeg - User Image Post",
 	            file=imgbytes,
@@ -270,7 +271,7 @@ def deleter():
 		if coordinate is not None:
 			for structure in BinstDataStructs:
 				if coordinate.backreftype == BinstDataStructs[structure].itemtypeint:
-					sData = BinstDataStructs[structure].deleteObject(coordinate.backrefid)
+					sData = BinstDataStructs[structure].deleteObject(coordinate.backrefid, coordinate.id)
 					db.session.delete(coordinate)
 					links = query(Linkage).filter((Linkage.coord1id == coordinate.id) |
 					                              (Linkage.coord2id == coordinate.id)).all()

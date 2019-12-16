@@ -138,6 +138,11 @@ def setUserLastUpdateCheckedTime(email,newDate):
 				posTrack = usersummary["PositionTrack"]
 				# pos = "X;Y;Zoom"
 				# Don't need to change the string at all.
+				start_date = datetime.datetime.now() + datetime.timedelta(-30)
+				Positionhistory\
+					.query.filter_by(backreftype=1, backrefid=current_user.id)\
+					.filter(Positionhistory.time <= start_date)\
+					.delete(synchronize_session=False)
 				newpos = Positionhistory(
 					backreftype=1,
 					backrefid=current_user.id,

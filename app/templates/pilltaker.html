@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src='static/js/Libraries/moment.min.js'></script>
+<navbar class="navbar navbar-expand-md titlebar">
+    <a class="navbar-brand" href="/home">BINST</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars" style="color:white"></i>
+    </button>
+<!--    <div class="collapse navbar-collapse" id="navbarSupportedContent">-->
+<!--        <ul class="navbar-nav mr-auto">-->
+<!--            <li class="nav-item active">-->
+<!--                <a class="nav-link" href="/signup">Sign Up<span class="sr-only">(current)</span></a>-->
+<!--            </li>-->
+<!--        </ul>-->
+<!--        <form class="form-inline my-2 my-lg-0">-->
+<!--            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">-->
+<!--            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>-->
+<!--        </form>-->
+<!--    </div>-->
+</navbar>
+
+<div id="flashedmsgs" class="swing" style="text-align:center;margin:1rem;display:absolute">
+</div>
+
+<script>
+    $(document).ready(function () {
+        pills = []
+        {% for pill in pills %}
+            pills.push(['{{pill.name}}', '{{pill.datetime}}', '{{pill.additional}}'])
+        {% endfor %}
+        let prevdate = ""
+        for (pilli in pills) {
+            let pill = pills[pilli]
+            let date = moment(pill[1]).format("Do MMM YYYY");
+            let time = moment(pill[1]).format("h:mm a");
+            let name = pill[0]
+            let add = pill[2]
+            html = `
+            <div class="list-group-item list-group-item-dark">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5>
+                            ${name}
+                        </h5>
+                    </div>
+                    <div>
+                        <div>
+                            <h5 class="">${time}</h5>
+                        </div>
+                    </div>
+                </div>
+                <small>
+                            ${add}
+                        </small>
+            </div>
+            `
+            if (prevdate !== date) {
+                $('#pilllist').append(`
+                    <div class="badge badge-secondary pt-3">${date}</div>
+                `)
+            }
+            prevdate = date
+            $('#pilllist').append(html)
+        }
+
+        types = []
+        {% for key, value in types.iteritems() %}
+            types.push(['{{key}}', '{{value}}'])
+        {% endfor %}
+        for (pilli in types) {
+            let pill = types[pilli]
+            html = `<a onclick="typepress(${pilli})" class="card bg-secondary m-1">
+                    <div class="card-body">
+                        <h4>${pill[0]}</h4>
+                        <div>${pill[1]}</div>
+                    </div>
+                </a>`
+            types[pilli] = pill
+            $('#typeholder').append(html)
+        }
+
+    });
+
+    function typepress(typeindex) {
+        let type = types[typeindex]
+        $.post("/pilltaker", {
+            pillname: type[0],
+            additional: type[1]
+        }).done(function (fromserver) {
+            location.reload()
+        });
+    }
+
+    var types = {}
+</script>
+
+<div style="margin-top:5%;" class="row d-flex justify-content-center">
+    <div class="col-lg-4 m-1 card text-light bg-dark" style="padding:40px;">
+        <h3>Take</h3>
+        <form method="post">
+            <div class="form-group">
+                <label class="" for="pillname">Pill name</label>
+                <input type="text" required="True" name="pillname" id="pillname" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="" for="pilladd">Details</label>
+                <input type="text" name="additional" id="pilladd" class="form-control">
+            </div>
+            <div class="d-flex justify-content-center">
+                <button name="btnsubmit" type="submit" style="width:150px" class="col-md-6 btn btn-block btn-dark">
+                    Take
+                </button>
+            </div>
+            <h3>Quick take</h3>
+            <div class="d-flex flex-wrap" id="typeholder">
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-4 m-1 card text-light bg-dark" style="padding:40px;text-align:center">
+        <div class="list-group" id="pilllist">
+<!--            <div class="list-group-item list-group-item-dark">-->
+<!--                <div class="d-flex justify-content-between">-->
+<!--                    <div>-->
+<!--                        <h4>-->
+<!--                            <div class="badge badge-secondary">10:29am</div> Rifaximin</h4>-->
+<!--                    </div>-->
+<!--                    <div>-->
+<!--                        <div>-->
+<!--                            <div class="badge badge-dark">10 Oct 2019</div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+        </div>
+    </div>
+
+</div>
+{% endblock %}

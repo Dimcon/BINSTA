@@ -173,8 +173,8 @@ class UserNavigation {
         let oldunitsize = unitsize
         unitsize = newunitsize
         unitsize = Math.round(unitsize * 100) / 100
-        if (unitsize < 1) {
-            unitsize = 1
+        if (unitsize < minzoom) {
+            unitsize = minzoom
         }
         if (unitsize > maxzoom) {
             unitsize = maxzoom

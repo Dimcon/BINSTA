@@ -16,7 +16,8 @@ var fXScreen // 1% of the screen width
 var fYScreen // 1% of the screen height
 
 var unitsize = 30 // Value representing map scale. ( between 1 and max zoom)
-var maxzoom = 100
+var maxzoom = 150
+var minzoom = 0.05
 var spacer = (5 * unitsize) // How far apart the closest grid lines are to each other
 
 var currentMousePos = { x: -1, y: -1 }; // Jquery mouse event handling
@@ -89,6 +90,10 @@ function setup() {
     setupV2()
 }
 
+function isNull(variable) {
+    return variable === undefined || variable === null
+}
+
 function setupV2() {
     setupPIXI()
     setupSocketIO()
@@ -126,7 +131,7 @@ function setupV2() {
 }
 
 function WidgetTests() {
-    //NetLoopWidgetManagers["TextContainerWidget"].Create(new Vector(10,-20),"This are text container. It are relevant. SDFSfewfesfes fse fefsfsefsef esfsefsef esfsefse fsef")
+    //NetLoopWidgetManagers["TextContainerWidget"].Create(new Vector(50,-20),"Lorem ipsum")
 }
 
 
@@ -145,7 +150,7 @@ function setupPIXI() {
     renderer = PIXI.autoDetectRenderer(width,height,
       {view:document.getElementById("binst-canvas"),
       resolution:1,
-      roundPixels:true,
+      roundPixels:false,
       autoResize:true,
       //legacy:false,
       //clearBeforeRender:true,
@@ -199,11 +204,15 @@ function setupEZGUI() {
     mainstage.addChild(guiContainer)
 }
 
-function createTestMenu(pos) {
-    popupmenumanager.startMenu(pos, "Options Menu")
-    popupmenumanager.addPlainButton("Button 1", "textStyle", function() {console.log("Pressed btn 1")}, 5, 2)
-    popupmenumanager.addPlainButton("Button 2", "textStyle", function() {console.log("Pressed btn 2")}, 5, 2)
-    popupmenumanager.addPlainButton("Button 3", "textStyle", function() {console.log("Pressed btn 3")}, 5, 2)
+// Called from Dirt.js on right click
+createItemMenuItems = {}
+function createItemMenu(pos) {
+    popupmenumanager.startMenu(pos, "Add")
+    for (let itemindex in createItemMenuItems) {
+        item = createItemMenuItems[itemindex]
+        // Text, TextStyle, Onpress, Data item 1, Data item 2
+        popupmenumanager.addPlainButton(item[0],item[1],item[2],item[3], item[4])
+    }
     let popupnum = popupmenumanager.endMenu()
     popupmenumanager.animatePopupIn(popupnum)
 }
@@ -220,6 +229,7 @@ function setupSocketIOCallbacks() {
 
         $('#statusbtn').html('<i class="fas fa-hands-helping"></i>')
         $('#statusbtn').removeClass('disconnected')
+        $('#baselinebuttons').removeClass('bbdisconnected')
         connectedToSocketIOServer = true
         //positionchanged()
         //networkLooper.CreateNetComponent({'dataitem1':"Value item 1 is a test","Dataitem2":"Value 2 is a longer test"})
@@ -229,6 +239,7 @@ function setupSocketIOCallbacks() {
         console.log("Connection broken")
         $('#statusbtn').html('<i class="fas fa-satellite"></i>')
         $('#statusbtn').addClass('disconnected')
+        $('#baselinebuttons').addClass('bbdisconnected')
         connectedToSocketIOServer = false
         invalidate()
     });

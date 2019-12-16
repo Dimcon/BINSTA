@@ -48,14 +48,18 @@
 
 <script type="text/javascript" src="static/js/layouts.js"></script>
 
-
-
 		<!-- Custom styles for this template -->
 		<link href="static/css/grid.css" rel="stylesheet">
 
+<!--Favicon-->
 
-	</head>
-	<body  id="BODY" class="" style="background-color: #171717;{% if ishome %}overflow:hidden{% endif %}">
+		<link rel="apple-touch-icon" sizes="180x180" href="static/favicon/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="static/favicon/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="static/favicon/favicon-16x16.png">
+		<link rel="manifest" href="static/favicon/site.webmanifest">
+
+</head>
+<body  id="BODY" class="" style="background-color: #171717;{% if ishome %}overflow:hidden{% endif %}">
 
 
 	<script>
@@ -95,7 +99,7 @@
 			<!--End Modal-->
 
 			<navbar class="navbar navbar-expand-md titlebar" style="">
-		  		<a class="navbar-brand" href="#">BINST</a>
+		  		<a class="navbar-brand" href="/home">BINST</a>
 		  		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 		  		  <i class="fas fa-bars" style="color:white"></i>
 		  		</button>
@@ -141,7 +145,10 @@
 								Not Important but still here
 		  		      		</a>
 		  		      		<div class="dropdown-menu" style="background:#212326" aria-labelledby="navbarDropdown">
-		  		     			<a class="nav-link" href="/logout" id="logout">
+								<a class="nav-link" href="/pilltaker" id="logout">
+									Pill taker
+								</a>
+								<a class="nav-link" href="/logout" id="logout">
 		  		     			  Log out
 		  		     			</a>
 		  		      		</div>

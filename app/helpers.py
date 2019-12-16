@@ -3,6 +3,7 @@ import base64
 from flask import Blueprint, Markup, render_template, flash, redirect, session, url_for, request, g, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from app import *
+from app import db
 from app.models import *
 import os, sys, time, datetime, io
 
@@ -78,13 +79,13 @@ def dbhset(hashkey, key, value, indexed, TimeUpdatedAt):
 		if not exists:
 			dbvals = dbgetlist(Kvpair, hashid=hash.id)
 			for item in dbvals:
-				redis_store.hset(hashkey, item.key, str(item.value))
+				redis_store.hset(hashkey, item.key, unicode(item.value))
 				if item.indexed == 1:
 					redis_store.hset(hashkey, item.key + ":indexed", "true")
 				else:
 					redis_store.hset(hashkey, item.key + ":indexed", "false")
-		redis_store.hset(hashkey, key, str(value))
-		redis_store.hset(hashkey, key + ":indexed", str(indexed))
+		redis_store.hset(hashkey, key, unicode(value))
+		redis_store.hset(hashkey, key + ":indexed", unicode(indexed))
 		redis_store.hset(hashkey, "LastUpdatedAt", TimeUpdatedAt)
 	finally:
 		releaseRedisLock()
@@ -121,7 +122,16 @@ def dbhget(hashkey, key):
 		val = kvpair.value
 	return val
 
+def dbhdelete(hashkey):
+	hash = dbget(Datahash, hashkey=hashkey)
+	db.session.delete(hash)
+	db.session.commit()
+	exists = redis_store.exists(hashkey)
+	if exists:
+		redis_store.delete(hashkey)
+
 def dbhgetall(hashkey):
+	# TODO: Are these not meant to resort to DB as a last effort and redis as a first?
 	hash = dbget(Datahash, hashkey=hashkey)
 	getRedisLock("Getting key")
 	vals = {}
@@ -261,8 +271,8 @@ def getBinaryFromBase64(inputAsBase64):
 	file = inputAsBase64
 	if file:
 		truncedimage = file[file.find("base64,") + 7:]
-		imgbin = base64.b64decode(truncedimage)  # TODO: setting the offset to 23 is going to fail for extensions shorter or longer than 4 chars
-		return imgbin
+		filebinary = base64.b64decode(truncedimage)  # TODO: setting the offset to 23 is going to fail for extensions shorter or longer than 4 chars
+		return filebinary
 	return None
 
 

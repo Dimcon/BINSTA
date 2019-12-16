@@ -20,31 +20,38 @@ class NLWInputHandler {
     }
 
     setupSpriteClickHandlers(Datacomponent,draggable) {
-
-        if (Datacomponent.NLWInstance.isOwned()) {
-            Datacomponent.sprite.interactive = true
-
-            Datacomponent.sprite
-            .on("mousedown", function(e) {
-                nlwinput.spriteClick(Datacomponent,e.data.global)
-            }).on("touchstart", function(e) {
-                return nlwinput.spriteClick(Datacomponent,e.data.global)
-            })
-            .on("mouseup", function(e) {
-                return nlwinput.spriteRelease(Datacomponent,e.data.global)
-            }).on("mouseupoutside", function(e) {
-                return nlwinput.spriteRelease(Datacomponent,e.data.global)
-            }).on("touchend", function(e) {
-                return nlwinput.spriteRelease(Datacomponent,e.data.global)
-            }).on("touchendoutside", function(e) {
-                return nlwinput.spriteRelease(Datacomponent,e.data.global)
-            })
-            .on("mousemove", function(e) {
-                return nlwinput.spriteDrag(Datacomponent,e.data.global)
-            }).on("touchmove", function(e) {
-                return nlwinput.spriteDrag(Datacomponent,e.data.global)
-            })
+        if (draggable) {
+            this.setAsDraggable(Datacomponent)
         }
+    }
+
+    setAsDraggable(Datacomponent) {
+        Datacomponent.sprite.interactive = true
+
+        Datacomponent.sprite
+        .on("mousedown", function (e) {
+                nlwinput.spriteClick(Datacomponent, e.data.global)
+        }).on("touchstart", function (e) {
+            return nlwinput.spriteClick(Datacomponent, e.data.global)
+        }).on("pointerdown", function (e) {
+            return nlwinput.spriteClick(Datacomponent, e.data.global)
+        })
+        .on("mouseup", function (e) {
+            return nlwinput.spriteRelease(Datacomponent, e.data.global)
+        }).on("mouseupoutside", function (e) {
+            return nlwinput.spriteRelease(Datacomponent, e.data.global)
+        }).on("touchend", function (e) {
+            return nlwinput.spriteRelease(Datacomponent, e.data.global)
+        }).on("touchendoutside", function (e) {
+            return nlwinput.spriteRelease(Datacomponent, e.data.global)
+        }).on("pointerup", function (e) {
+            return nlwinput.spriteRelease(Datacomponent, e.data.global)
+        })
+        .on("mousemove", function (e) {
+            return nlwinput.spriteDrag(Datacomponent, e.data.global)
+        }).on("touchmove", function (e) {
+            return nlwinput.spriteDrag(Datacomponent, e.data.global)
+        })
     }
 
     setupRightClickHandler(Datacomponent,Handler) {

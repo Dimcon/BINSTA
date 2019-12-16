@@ -1,6 +1,21 @@
 
 var nametagsize = [8,1.2]
 
+var profileImagesize = 100
+var profileImageRoundness = 10
+
+function resizeImageSprite(texture, width, height) {
+    let loadedimage = new PIXI.Sprite(texture)
+    let imgscale = 1
+    if (loadedimage.width > loadedimage.height) {
+        imgscale = (width) / loadedimage.width
+    } else {
+        imgscale = (height) / loadedimage.height
+    }
+    loadedimage.scale.x = (imgscale)
+    loadedimage.scale.y = (imgscale)
+    return loadedimage
+}
 class PeopleManager {
     constructor() {
         this.people = {}
@@ -24,8 +39,8 @@ class PeopleManager {
             if (NewImage) {
                 peopleManager.getPersonImage(bruce)
             }
-            for (let method in bruce.onChangeDataCallbacks) {
-                bruce.onChangeDataCallbacks[method][0](bruce,bruce.onChangeDataCallbacks[method][1])
+            for (let counter = 0; counter < bruce.onChangeDataCallbacks.length;counter += 1) {
+                bruce.onChangeDataCallbacks[counter][0](bruce,bruce.onChangeDataCallbacks[counter][1])
             }
             completedSomeLoad()
         });
@@ -51,6 +66,35 @@ class PeopleManager {
                             //img.mask(circlemask)
                             bruce.imageready = true
                             bruce.hasdatachanged = true
+
+                            for (var i = bruce.profileimagesprite.children.length - 1; i >= 0; i--) {
+                                removeAndDestroySprite(bruce.profileimagesprite.children[i])
+                            }
+
+                            let newsprite = new PIXI.Sprite(bruce.profileimage)
+                            let newloadedimage = newsprite
+                            //dataComponent.image = sprite
+                            let tmpscale = 50
+                            let fX = 1
+                            let fY = 1
+                            let imgscale = 1
+                            if (newloadedimage.width > newloadedimage.height) {
+                                imgscale = (profileImagesize * fX) / newloadedimage.width
+                            } else {
+                                imgscale = (profileImagesize * fY) / newloadedimage.height
+                            }
+                            newloadedimage.scale.x = (imgscale)
+                            newloadedimage.scale.y = (imgscale)
+                            bruce.profileimagesprite.addChild(newloadedimage)
+
+                            // Draw a small green square to indicate what is a profile iamge
+                            // let graphics2 = new PIXI.Graphics()
+                            // graphics2.lineStyle(0, 0x222222, 0);
+                            // graphics2.beginFill(0x45ff45);
+                            // graphics2.drawRoundedRect(-20, 0, 10, 10, 10);
+                            // graphics2.endFill();
+                            // bruce.profileimagesprite.addChild(graphics2)
+
                             bruce.generateFriendButtonGraphic()
                             for (let method in bruce.onChangeSpriteCallbacks) {
                                 bruce.onChangeSpriteCallbacks[method][0](bruce,bruce.onChangeSpriteCallbacks[method][1])
@@ -81,18 +125,6 @@ class PeopleManager {
         return this.people[email]
     }
 
-    addFunctionOnPersonChange(email, callback) {
-        this.getPerson(email).callbacks.push(callback)
-    }
-
-    callAllCallbacks(bruce) {
-        let callbacks = bruce.callbacks
-        for (let i = 0; i < callbacks.length;i++) {
-            let tmpmethod = callbacks[i]
-            tmpmethod()
-        }
-    }
-
     getPerson(email) {
         if (email in this.people) {
             return this.people[email]
@@ -113,7 +145,7 @@ class PeopleManager {
         for(let email in this.people) {
             if (this.people[email].IsInRangeTimer > 0) {
                 let bob = this.people[email]
-                newvecposition = ScreenCoordToPlaneCoord(new Vector(bob.MapPosition[0],bob.MapPosition[1]))
+                let newvecposition = ScreenCoordToPlaneCoord(new Vector(bob.MapPosition[0],bob.MapPosition[1]))
 
                 if (useremail == bob.email) {
                     fill(180,100)
@@ -154,6 +186,16 @@ class person {
             this.name = "..."
             this.bio = "..."
             this.profileimageid = 0
+            this.profileimagesprite = new PIXI.Sprite()
+
+            let graphic = new PIXI.Graphics()
+            graphic.lineStyle(0, 0x222222, 0);
+            graphic.beginFill(0xffffff);
+            graphic.drawRoundedRect(0, 0, profileImagesize, profileImagesize, profileImageRoundness);
+            graphic.endFill();
+            let mask = new PIXI.Sprite(graphic.generateTexture());
+            this.profileimageroundedoutlinemask = mask
+
             this.idnum = "..."
             this.callbacks = []
             this.hasdatachanged = true
@@ -166,6 +208,16 @@ class person {
             this.isFriends = false
             this.friendbtnsprite = new PIXI.Sprite()
             peopleManager.loadPerson(this)
+        }
+
+        getShortenedName(length) {
+            let shortname = this.name.substring(0, length)
+            let shortened = false
+            if (shortname !== this.name) {
+                shortened = true;
+                shortname += ".."
+            }
+            return [shortname, shortened]
         }
 
         generateFriendButtonGraphic() {
@@ -250,12 +302,12 @@ class person {
         }
 
         onImageChanged(callback,DataComponent) {
-            for (let method in this.onChangeDataCallbacks) {
-                if ( this.onChangeDataCallbacks[method][1].coordinateID == DataComponent.coordinateID) {
-                    //delete this.onChangeDataCallbacks[method]
-                    console.log("Duplicate callback")
-                }
-            }
+            // for (let method in this.onChangeDataCallbacks) {
+            //     if ( this.onChangeDataCallbacks[method][1].coordinateID == DataComponent.coordinateID) {
+            //         //delete this.onChangeDataCallbacks[method]
+            //         console.log("Duplicate callback")
+            //     }
+            // }
             if (this.imageready) {
                 callback(this,DataComponent)
             }
@@ -263,12 +315,12 @@ class person {
         }
 
         onDataChanged(callback,DataComponent) {
-            for (let method in this.onChangeDataCallbacks) {
-                if ( this.onChangeDataCallbacks[method][1].coordinateID == DataComponent.coordinateID) {
-                    //delete this.onChangeDataCallbacks[method]
-                    console.log("Duplicate callback")
-                }
-            }
+            // for (let method in this.onChangeDataCallbacks) {
+            //     if ( this.onChangeDataCallbacks[method][1].coordinateID == DataComponent.coordinateID) {
+            //         //delete this.onChangeDataCallbacks[method]
+            //         console.log("Duplicate callback")
+            //     }
+            // }
             if (this.ready) {
                 callback(this,DataComponent)
             }

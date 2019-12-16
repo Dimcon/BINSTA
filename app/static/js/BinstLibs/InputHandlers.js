@@ -18,6 +18,43 @@ var UserVectorAcceleration
 
 var mouseIsPressed = false
 
+class FileInputHandler {
+    constructor() {
+
+    }
+
+    static bindFileInputButtonToHandler(btnSelector, handler) {
+        $(btnSelector).on('change', async (e) => {
+            FileInputHandler.handleFileSelect(e, handler)
+        })
+    }
+
+    static handleFileSelect(e, handler) {
+        var files = e.target.files;
+        //var sanitizedFiles = []
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
+            //if (!f.type.match("image.*")) {
+            //    continue;
+            //}
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                //var html = "<img src=\"" + e.target.result + "\">" + f.name + "<br clear=\"left\"/>";
+                //selDiv.innerHTML += html;
+                handler(this.filename, e.target.result)
+                //sanitizedFiles.push({
+                //    filename: f.name,
+                //    fileData: e.target.result
+                //})
+            }
+            reader.filename = f.name
+            reader.readAsDataURL(f);
+        }
+        //return sanitizedFiles
+    }
+}
+
 
 function setupHandlers(canvas) {
 // TODO: Find a way to make pinch to zoom work better on mobile
@@ -29,6 +66,8 @@ function setupHandlers(canvas) {
     //canvas.touchMoved(onMouseDrag)
     $("#binst-canvas").on('pointerdown',onClick)
     $("#binst-canvas").on('pointerup',onReleaseClick)
+    $("#binst-canvas").on('touchstart', onClick)
+    $("#binst-canvas").on('touchend', onReleaseClick)
     $("#binst-canvas").on('pointermove',onmousemove)
     $("#binst-canvas").bind('mousewheel DOMMouseScroll', mouseWheel);
 
@@ -184,7 +223,6 @@ function onClick(e) {
                 }
             }
             if (!absorbed && !onmobile) {
-
                 LastMouseCoords = new Vector(posx,posy)
                 LastUservectorPosition = new Vector(Uservector.x,Uservector.y)
             }
@@ -208,14 +246,15 @@ function StartDragDeceleration() {
 var Deccelerating = false
 
 function handleDragDeceleration() {
-    if ((UserVectorAcceleration.x > -0.1) && (UserVectorAcceleration.x < 0.1)) {
+    let stopthreshold = 2
+    if ((UserVectorAcceleration.x > -stopthreshold) && (UserVectorAcceleration.x < stopthreshold)) {
         UserVectorAcceleration.x = 0
     }
-    if ((UserVectorAcceleration.y > -0.1) && (UserVectorAcceleration.y < 0.1)) {
+    if ((UserVectorAcceleration.y > -stopthreshold) && (UserVectorAcceleration.y < stopthreshold)) {
         UserVectorAcceleration.y = 0
     }
-    if ((UserVectorAcceleration.x > -0.1) && (UserVectorAcceleration.x < 0.1)) {
-        if ((UserVectorAcceleration.y > -0.1) && (UserVectorAcceleration.y < 0.1) && Deccelerating) {
+    if ((UserVectorAcceleration.x > -stopthreshold) && (UserVectorAcceleration.x < stopthreshold)) {
+        if ((UserVectorAcceleration.y > -stopthreshold) && (UserVectorAcceleration.y < stopthreshold) && Deccelerating) {
             Deccelerating = false
             MinusLoop()
         }
@@ -223,7 +262,7 @@ function handleDragDeceleration() {
     if (!draggingCanvas && Deccelerating) {
         Uservector.x += UserVectorAcceleration.x
         Uservector.y += UserVectorAcceleration.y
-        let factor = 5
+        let factor = 20
         UserVectorAcceleration = new Vector(UserVectorAcceleration.x - (UserVectorAcceleration.x/factor),UserVectorAcceleration.y - (UserVectorAcceleration.y / factor))
         //invalidate()
     }
@@ -304,8 +343,8 @@ function onReleaseClick(e) {
     invalidate()
 }
 
-var zoomstops = [1,1.5,2,3,5,9.7,12.288,15.36,19.2,24,30,37.5,46.8,75,100]
-let display =   ["1","5","10","15","25","50","75","90","100"]
+var zoomstops = [0.3,0.5,1,1.5,2,3,5,9.7,12.288,15.36,19.2,24,30,37.5,46.8,75,100]
+let display =   ["1", "2", "3","5","10","15","25","50","75","90","100"]
 var zoomstoppos = 10
 var MouseZoomAnim = "NaN"
 
