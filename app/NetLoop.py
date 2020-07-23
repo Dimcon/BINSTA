@@ -43,6 +43,12 @@ def requestSetData(data):
 	print("Got connection")
 	emit('NetDataRecieved', {'payloadID': payloadID,'key': key})
 
+@socketio.on('NetSendUpdate', namespace='/navengine')
+def requestSendUpdate(data):
+	pos = [data['posx'], data['posy']]
+	message = data["message"]
+	action = data["action"]
+	pushFeedUpdate(pos, 30, action, message, 0, current_user)
 
 @socketio.on('NetCreateInstance', namespace='/navengine')
 def requestCreate(data):

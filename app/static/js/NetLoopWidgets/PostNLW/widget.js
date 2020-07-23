@@ -119,6 +119,7 @@ class PostNLW extends NetComponent {
         this.loaders = []
         this.imgwidth = 800
         this.imagesWithIDs = {}
+        this.debug = false
     }
 
     onCreate() {
@@ -285,7 +286,7 @@ class PostNLW extends NetComponent {
         } else {
             listofItems = JSON.parse(listofItems)
         }
-        console.log(listofItems)
+        if (this.debug) console.log(listofItems)
         let padding = {"l": 0.75 * 50, "t": 0.75 * 50, "r": 0.75 * 50, "b": 0.75 * 50}
         let itempadding = {
             "l": 0.25 * 50,

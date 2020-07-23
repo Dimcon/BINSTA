@@ -26,6 +26,12 @@ home = "/home"
 #################################   main navigator page
 @naveng.route('/navigator',methods=['GET','POST'])
 def navigator():
+	hasCoords = False
+	gotoCoords = []
+	if "x" in request.args:
+		if "y" in request.args:
+			hasCoords = True
+			gotoCoords = [int(request.args["x"]), request.args["y"]]
 	coord = dbget(Coordinate, backreftype=1, backrefid=g.user.id)
 	hasplacedprofile="true"
 	if coord is None:
@@ -42,7 +48,7 @@ def navigator():
 		usercenterpos = [0,0]
 		if poshistory is not None and len(poshistory.latestpos.split(';')) > 1:
 			usercenterpos = [poshistory.latestpos.split(';')[0],poshistory.latestpos.split(';')[1]]
-	return render_template("navigatortemplate.html",ishome=True,
+	return render_template("navigatortemplate.html",ishome=True, hasCoords=hasCoords, gotoCoords=gotoCoords,
 	                       hasplacedprofile=hasplacedprofile,usercenterpos=usercenterpos,
 	                       profilecoord=coord,user=getPerson(g.user.id))
 

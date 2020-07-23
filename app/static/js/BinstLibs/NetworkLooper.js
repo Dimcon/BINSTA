@@ -1,5 +1,6 @@
 
 
+
 class NetworkLooper {
     constructor() {
         this.NetInstances = {}

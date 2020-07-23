@@ -2,22 +2,22 @@
 
 <style>
 .commsview-open:hover #msglist {
-    height:calc(30rem);
+    /*height:calc(30rem);*/
     transition: 0.3s;
 }
 
 #msglist {
-    height:calc(10rem);
+    /*height:calc(60vh);*/
     transition: 0.3s;
 }
 
 .commsview-open:hover #convolist {
-    height:calc(33rem);
+    /*height:calc(33rem);*/
     transition: 0.3s;
 }
 
 #convolist {
-    height:calc(13rem);
+    /*height:calc(13rem);*/
     transition: 0.3s;
 }
 
@@ -30,8 +30,17 @@
     line-height: 1.2;
 }
 
+.notifholder {
+    position: relative;
+}
 .hasnotif {
-   position:relative;
+   position:absolute;
+    bottom: 11%;
+    right: 20%;
+}
+
+.htmlhasnotif {
+    position: relative;
 }
 .hasnotif[data-badge]:after {
    content:attr(data-badge);
@@ -46,6 +55,22 @@
    line-height:18px;
    border-radius:50%;
    box-shadow:0 0 1px #333;
+}
+
+.htmlhasnotif[data-badge]:after {
+    content: attr(data-badge);
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    font-size: .7em;
+    background: red;
+    color: white;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 18px;
+    border-radius: 50%;
+    box-shadow: 0 0 1px #333;
 }
 
 .activemsgbkg {
@@ -96,6 +121,10 @@
 .searchbar:focus {
     outline:none
 }
+
+.hinh {
+    height:100%;
+}
 </style>
 
 <script>
@@ -120,13 +149,13 @@
     }
 </script>
 
-<div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">
-    Comms
-</div>
-<div id="CommsViewlistholder" class="ml-0 mr-0 thinscroll">
-    <div class="row pl-0 pr-0 ml-0 mr-0">
+<!--<div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">-->
+<!--    Comms-->
+<!--</div>-->
+<div id="CommsViewlistholder" class="hinh ml-0 mr-0 thinscroll bg-dark">
+    <div class="row pl-0 pr-0 ml-0 mr-0 hinh" style="max-width: 100vw;">
         <div id="convoBtnHolder"
-             style="width:5rem;background-image: linear-gradient(to right, #333333cc ,#222222cc);"
+             style="display:flex;flex-direction:column;align-items:flex-end;width:5rem;background-image: linear-gradient(to right, #333333cc ,#222222cc);"
              class="ml-0 mr-0 text-light">
             <div id="convolist" class="msglist pl-0 pr-0 ml-0 mr-0 thinscroll"
              style="overflow-y:auto;display: flex; flex-direction: column-reverse;">
@@ -177,11 +206,12 @@
                 </div>
             </div>
         </div>
-        <div v-if="(convos.length > 0 && showingConvo > 0) || showingConvo == -2" style="overflow-x: scroll;"
+        <div v-if="(convos.length > 0 && showingConvo > 0) || showingConvo == -2"
+             style="display: flex;flex-direction: column; background: #25211c;"
              id="messagelistholder"
-             class="thinscroll col pl-0 pr-0 ml-0 mr-0 text-light">
-            <div class="row d-flex justify-content-between"
-                style="background-image: linear-gradient(to bottom, #333333cc ,#222222cc);">
+             class="hinh thinscroll col pl-0 pr-0 ml-0 mr-0 text-light">
+            <div class="row align-top d-flex justify-content-between bg-dark"
+                style="">
                 <div class="row">
                     <!--<button type="button" style="border-radius:10vw" class="ml-3 mr-1 mt-1 mb-1 btn btn-dark">-->
                         <!-- - -->
@@ -199,7 +229,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row list-vertical-center">
+                <div class="row list-vertical-center ">
                     <button type="button" style="border-radius:10vw" class="ml-3 mr-1 mt-1 mb-1 btn btn-dark">
                            <i  class="fas fa-search"></i>
                     </button>
@@ -218,9 +248,7 @@
                     </div>
                 </div>
             </div>
-            <div id="msglist" class="msglist thinscroll list-group text-light"
-            style="overflow-y:scroll;display: flex; flex-direction: column-reverse;">
-
+                <div class="thinscroll" style="flex-grow: 5;position: relative;">
                 <convo-display v-if="convos.length > 0" :vuseremail="vuseremail" :convo="getShownConvo()" >
 
                 </convo-display>
@@ -228,15 +256,16 @@
                      class="list-group-item msg alert alert-info mt-5 mb-5 ml-5 mr-5">
                     You don't have any convos! Press the + button underneath the conversation list to start a new one!
                 </div>
-            </div>
-            <div class=" mt-2 mb-2 row d-flex justify-content-between">
-                <div class="col">
-                    <textarea v-model="textinput" rows="1" onkeyup="AutoGrowTextArea(this)"
-                              class="mr-2 ml-2 form-control bg-dark text-light"
-                            style="overflow-y:auto;resize: none;"></textarea>
                 </div>
-                <div class="mr-4 ml-2">
-                    <button v-on:click="sendMessage" type="button" class="btn btn-dark round"><i class="fas fa-paper-plane"></i></button>
+            <div class="align-bottom mt-2 mb-2 row d-flex justify-content-between">
+                <div class="mr-0 ml-2">
+                    <button v-on:click="sendMessage" type="button" class="btn btn-dark round"><i
+                            class="fas fa-paper-plane"></i></button>
+                </div>
+                <div class="col ml-1 pl-0">
+                    <textarea v-model="textinput" rows="1" onkeyup="AutoGrowTextArea(this)"
+                              class="mr-2 ml-1 form-control bg-dark text-light"
+                            style="overflow-y:auto;resize: none;"></textarea>
                 </div>
             </div>
         </div>

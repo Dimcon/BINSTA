@@ -14,6 +14,7 @@
                 "Position": Position.x + ";" + Position.y,
                 "CreateDate": new Date().toISOString()
             })
+            sendUpdateToFriends(Position, " has posted a message at ", "")
         })
         nlw.doOnLoad(function (iID, DataComp) {
             return new TextContainerNLW(iID, DataComp)

@@ -4,7 +4,7 @@
 
 <script>
     window.onload = function() {
-        change('navigator')
+        change('navigator{% if hasCoords %}?x={{ gotoCoords[0] }}&y={{ gotoCoords[1] }}{% endif %}')
     }
 
 </script>

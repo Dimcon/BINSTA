@@ -207,6 +207,11 @@ class person {
             this.friendCount = 0
             this.isFriends = false
             this.friendbtnsprite = new PIXI.Sprite()
+            this.friendBtn = {
+                width:0,
+                height:0,
+                sprite: new PIXI.Sprite()
+            }
             peopleManager.loadPerson(this)
         }
 
@@ -239,14 +244,14 @@ class person {
                     align:'Justified'
                 })
                 text1 = "Unfollow"
-                friendbtngraphics.lineStyle(2, 0x777777, 1);
+                friendbtngraphics.lineStyle(0, 0x777777, 1);
                 friendbtngraphics.beginFill(0x404040);
             } else {
                 textstyle = new PIXI.TextStyle({
                     fontFamily: BodyFont,
                     fontSize: 28,
                     fontWeight: 'normal',
-                    fill: ['#007bff'],
+                    fill: ['#feefff'],
                     fillGradientType: 2,
                     stroke: '#3434ee',
                     strokeThickness: 0,
@@ -255,18 +260,19 @@ class person {
                     align:'Justified'
                 })
                 text1 = "Follow"
-                friendbtngraphics.lineStyle(2, 0x007bff, 1);
-                friendbtngraphics.beginFill(0x404040);
+                friendbtngraphics.lineStyle(0, 0x007bff, 1);
+                friendbtngraphics.beginFill(0x575757);
             }
             let tmpText1 = new PIXI.Text(text1, textstyle);
             let textMetrics1 = PIXI.TextMetrics.measureText(text1, textstyle)
 
             let width = 50 * 2
-            let height = 40 * 1
+            let height = 50 * 1
             let TextSprite = RenderTextToSprite(tmpText1)
-            TextSprite.position.x = (20)
-            TextSprite.position.y = (5)
-            friendbtngraphics.drawRoundedRect(0, 0, textMetrics1.width + 40, height,8);
+            TextSprite.position.x = (40)
+            TextSprite.position.y = (height / 2) - (textMetrics1.height / 2)
+
+            friendbtngraphics.drawRoundedRect(0, 0, textMetrics1.width + 80, height,12);
             friendbtngraphics.endFill();
 
             friendbtnsprite.addChild(friendbtngraphics)
@@ -295,6 +301,9 @@ class person {
             })
             for (var i = this.friendbtnsprite.children.length - 1; i >= 0; i--) {	this.friendbtnsprite.removeChild(this.friendbtnsprite.children[i]);};
             this.friendbtnsprite.addChild(friendbtnsprite)
+            this.friendBtn.width = textMetrics1.width + 40
+            this.friendBtn.height = height
+            this.friendBtn.sprite.addChild(friendbtnsprite)
         }
 
         NotifyDataChanged() {

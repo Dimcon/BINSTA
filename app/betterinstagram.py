@@ -106,15 +106,21 @@ def isPostSeen(PostID, userid):
 def getfriends(userid):
 	# HOLY SMOAKS THIS IS EXPENSIVVE
 	# TODO: OPTIMISE THE SHIT OUT OF THIS
-	connectionss = query(Connection).filter(\
-		(Connection.user1id == userid) | (Connection.user2id == userid)\
-		)
-	friends = []
-	for conn in connectionss:
-		if conn.user1id == userid:
-			friends.append(User.query.filter_by(id=conn.user2id).first())
-		else:
-			friends.append(User.query.filter_by(id=conn.user1id).first())
+	# Update: Optimised (I Think..)
+	
+	#connectionss = query(Connection).filter(\
+	#	(Connection.user1id == userid) | (Connection.user2id == userid)\
+	#	)
+	#friends = []
+	#for conn in connectionss:
+	#	if conn.user1id == userid:
+	#		friends.append(User.query.filter_by(id=conn.user2id).first())
+	#	else:
+	#		friends.append(User.query.filter_by(id=conn.user1id).first())
+	friends = query(User).filter(\
+		((Connection.user1id == userid) & (User.id == Connection.user2id))
+		| ((Connection.user2id == userid) & (User.id == Connection.user1id))
+	).all()
 	return friends
 
 def isFriends(userid1,userid2):
@@ -187,7 +193,13 @@ def Signup():
 @binst.route('{}'.format(home),methods=['GET','POST'])
 @login_required
 def homepage():
-	return render_template('homepage.html',
+	hasCoords = False
+	gotoCoords = []
+	if "x" in request.args:
+		if "y" in request.args:
+			hasCoords = True
+			gotoCoords = [int(request.args["x"]), request.args["y"]]
+	return render_template('homepage.html', hasCoords=hasCoords, gotoCoords=gotoCoords,
 	                       loggedin=True,ishome=True,
 				title='Binst - Home')
 ##############################################
@@ -218,6 +230,13 @@ def scriptrunner():
 @binst.route('/profile-<email>',methods=['GET','POST'])
 @login_required
 def profilepage(email):
+	if "update" in request.form:
+		bio = request.form["updateBio"]
+		name = request.form["updateName"]
+		current_user.name = name
+		current_user.bio = bio
+		dbcommit()
+		return jsonify({'result': 'success'})
 	Bob = User.query.filter_by(email=email).first()
 	isme = email == current_user.email
 	friends = getfriends(Bob.id)

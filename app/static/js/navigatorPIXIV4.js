@@ -213,8 +213,58 @@ function createItemMenu(pos) {
         // Text, TextStyle, Onpress, Data item 1, Data item 2
         popupmenumanager.addPlainButton(item[0],item[1],item[2],item[3], item[4])
     }
+    popupmenumanager.addHeading("---", "textStyle", () => {}, "", "")
+    popupmenumanager.addPlainButton("Share this location", "", () => {
+        shareLocation(pos)
+    }, "", "")
     let popupnum = popupmenumanager.endMenu()
     popupmenumanager.animatePopupIn(popupnum)
+}
+var appName = "Binsta"
+function copyLocationToClipboard(pos) {
+    let data = "http://127.0.0.1:8080/home?x=" + pos.x + "&y=" + pos.y
+    clipboard(data)
+}
+function gotoLinkLocation() {
+    if (gotoCoords != false) {
+        userNavigation.gotoRelative(gotoCoords, 1500)
+    }
+}
+function shareLocation(pos) {
+    let dispPos = new Vector(parseInt(pos.x),parseInt(pos.y))
+    console.log(dispPos)
+    copyLocationToClipboard(dispPos)
+    let html = `
+            <script>
+            $('#mymodal').modal()
+            $('#mymodal').on('hide.bs.modal', function (e) {
+                $('#JSLoadHere').empty()
+            })
+            </script>
+            <div id="mymodal" class="modal fade" tabindex="-1" role="dialog">
+              <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                <div class="modal-content bg-dark text-light">
+                  <div class="modal-body">
+                    `  + appName + ` Location
+                    <div class="w-100 text-center">
+                    <h4 style="color:#ff853e">` + parseInt(dispPos.x) + "::" + parseInt(dispPos.y) + `</h4>
+                    <small class="badge badge-dark">Copied to clipboard!</small>
+
+                    </div>
+                    <div class="mt-2 d-flex justify-content-end">
+                    <button type="button" onclick="copyLocationToClipboard(new Vector(${dispPos.x},${dispPos.y}))" class="btn btn-outline-secondary" style="border-radius: 5rem">
+                        Copy again
+                    </button>
+                    <button type="button" onclick="$('#mymodal').modal('hide')" class="ml-2 btn btn-outline-primary" style="border-radius: 5rem">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        `
+    replacePlaceholderWithHtml(html, '#JSLoadHere')
 }
 function setupSocketIOCallbacks() {
     widgetManager.setupSocketCallbacks()

@@ -4,7 +4,7 @@
 <script src="https://cdn.jsdelivr.net/npm/emoji-button@latest/dist/index.min.js"></script>
 <script src="static/js/Libraries/croppie.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="static/js/Libraries/vue.js"></script>
 <script src="static/js/Libraries/hashes.js"></script>
 <script src='static/js/PIXIV4/pixi.min.js'></script>
 <script src='static/js/Libraries/PIXI-extra-filters.js'></script>
@@ -72,9 +72,11 @@
     var UserPositionHistory = []
     var UserPositionHistoryPlace = 0
 
+    var gotoCoords = {% if hasCoords%}new Vector({{ gotoCoords[0] }},{{ gotoCoords[1] }}){% else %}false{% endif %}
 
     $(document).ready(function() {
         setup()
+
     });
 
     async function loadJavascriptFromUrl(url, onSuccess) {
@@ -173,6 +175,7 @@
         setInterval(tickHistory,1000)
         setInterval(networkLooper.pollForUpdatedData,networkLooper.pollInterval)
         insertHtmlFromUrl("/pickers")
+        gotoLinkLocation()
     }
 
 
@@ -378,13 +381,32 @@
     cursor: pointer;
 }
 
+
+
+
+
 body { background-color: #000000; }
       canvas { background-color: #222222; }
 </style>
 
-<div align="center">
-    <canvas id="binst-canvas" style="width:100vw;height:100vh" width="100vw" height="100vh"></canvas>
-  </div>
+<div class="w-100 d-flex" style="height: 100vh">
+<!--    <div id="commsDraw" class="slideCommsClose" style="">-->
+<!--        <div id="CommsView"-->
+<!--             class="thinscroll commsview-open text-light"-->
+<!--             style="-->
+<!--                /*border-radius:5px;*/-->
+<!--                pointer-events: auto!important;-->
+<!--                /*background-image: linear-gradient(to right, #222222cc ,#050505cc,#000000cc,#050505cc, #222222cc);*/-->
+<!--                /*border:3px solid #777777ff;*/-->
+<!--                /*overflow-y:none;*/"-->
+<!--        >-->
+<!--        </div>-->
+<!--    </div>-->
+<div id="binst-canvas-drawer" class="w-100" style="" align="center">
+    <canvas class="w-100 h-100" id="binst-canvas" style="" width="" height="">
+    </canvas>
+</div>
+</div>
 
 <script>
     function openNewPostWindow() {
@@ -617,58 +639,118 @@ height:calc(30rem);
     height:2.5rem;
     transition: 0.3s;
 }
+
+.slideCanvasOpen {
+    /*transform: translateX(25rem);*/
+    box-shadow: 0px 0px 20px black;
+    margin-right: -25rem;
+    transition: all ease 1s;
+}
+
+.slideCanvasClosed {
+    margin-right: 0rem;
+    transition: all ease 1s;
+}
+
+.slideCommsOpen {
+    /*margin-left: 0;*/
+    /*width: 25rem;*/
+
+    max-width: 40rem;
+    /* min-width: 20rem; */
+    width: fit-content;
+    transition: all ease 1s;
+}
+
+.slideCommsClose {
+    transform: translateX(-50rem);
+    width: 0;
+    transition: all ease 1s;
+}
+
+#commsDraw {
+    /*overflow: hidden;*/
+    /*position: absolute;*/
+    /*transition: all ease 1s;*/
+}
+
+.bottombarBkg {
+    background: #505c6a55;
+    transition: all ease 1s;
+}
+
+.bottombarNoBkg {
+    transition: all ease 1s;
+}
+
+.coordinput {
+    color: #f8f9fa;
+    background-color: #21262b;
+    background-image: none;
+}
 </style>
-<div id="baselinebuttons"
-     style="
-position:absolute;
-bottom:0rem;
+<div id="bottomStuffHolder" class="w-100 hinh"
+    style="     display: flex;
+                -ms-flex-direction: column;
+                flex-direction: column;
+                word-wrap: break-word;
+                position: absolute;
+                bottom: 0vh;top:0vh;
+                pointer-events: none;"
+>
+<!--    <div style="overflow: scroll" class="w-100 d-flex justify-content-start">-->
+        <div id="commsDraw" class="hinh slideCommsClose" style="flex-grow: 10">
+            <div id="CommsView"
+                 class="hinh thinscroll commsview-open text-light"
+                 style="
 
-background: #383838;
-'background-image: linear-gradient(to top, #222222ff, #222222cc, #222222cc);
-"
-     class="row d-flex mb-2 justify-content-center baselinebuttons">
-<div class="col-md-12 pb-2 pt-2">
-    <div class="row text-light w-100 h-100 d-flex justify-content-center">
-
-        <div class="pr-0">
-            <button id="msgbutton" class="hasnotif btn uibtn" data-badge="6" onclick="javascript:hideshowmsgs()"><i class="fas fa-envelope"></i></button>
-        </div>
-        <div class=" pl-0 pr-0 ">
-            <button id="backbutton" class="btn uibtn" onclick="javascript:GoBackOneStep()"><i class="fas fa-undo"></i></button>
-        </div>
-        <div class=" pl-0 pr-0 d-flex justify-content-between">
-            <button class="btn uibtn" onclick="javascript:userNavigation.gotoprofile()"><i class="fas fa-home"></i></button>
-        </div>
-        <div class="pl-2 pr-2 d-flex justify-content-between">
-            <input id="CoordinateEditor" onblur="enteredNewCoord();" class="coordeditor form-control btn btn-outline-light" style="" value="::">
-        </div>
-        <div class="pl-0 pr-0 d-flex justify-content-between">
-            <button type="button" id="statusbtn" class="btn statusbtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Connection status"><i class="fas fa-satellite"></i></button>
-        </div>
-        <div class="pl-0 pr-0 d-flex justify-content-between">
-            <button onclick="javascript:openNewPostWindow()" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></img></button>
-        </div>
-        <div class="pl-0 d-flex justify-content-between">
-            <button onclick="javascript:zoomClick()" type="button" id="zoombtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-search-plus"></i> 30</button>
-        </div>
-
-        <!--<div class="col-md-5 align-content-center">-->
-            <!--<input id="zoomslider" oninput="javascript:userNavigation.jumpzoomto(1 + (($('#zoomslider').val() /100) * (100 - 1)))" type="range" min="0" max="100" class="slider">-->
-        <!--</div>-->
-
-
-        <!--<div class="btn-group dropup">-->
-            <!--<button type="button" id="btnnewstuff" class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown">-->
-                <!--<i class="far fa-plus-square"></i>-->
-            <!--</button>-->
-            <!--<div class="dropdown-menu dropdown-menu-right bg-dark">-->
-                <!--<a class="dropdown-item text-light" onclick="javscript:openPostEditor()" href="#">Mkpost</a>-->
-                <!--<a class="dropdown-item text-light" onclick="javscript:openPortalmaker()" href="#">Rift</a>-->
-                <!--<a class="dropdown-item text-light" onclick="javscript:openFencemaker()" href="#">Fence</a>-->
-            <!--</div>-->
+                border-radius:5px;
+                pointer-events: auto!important;
+                /*background-image: linear-gradient(to right, #222222cc ,#050505cc,#000000cc,#050505cc, #222222cc);*/
+                /*border:3px solid #777777ff;*/
+                /*overflow-y:none;*/"
+            >
+            </div>
+<!--        </div>-->
+    </div>
+    <div id="bottombarbkg" style="" class="pt-0 w-100 d-flex justify-content-center">
+        <div id="baselinebuttons"
+             class="mt-2 row d-flex mb-2 justify-content-center baselinebuttons"
+             style="
+                /*bottom:0rem;*/
+                 overflow: auto;
+                 pointer-events: auto!important;
+                background: #383838;
+                "
+        >
+            <div class="w-100 pb-2 pt-2 " style="">
+                <div style="" class="text-light w-100 flex-nowrap d-flex justify-content-between">
+                    <div class="ml-3 pr-0 pl-0 d-flex justify-content-between">
+                        <button id="msgbutton" class="htmlhasnotif btn uibtn "  onclick="javascript:hideshowmsgs()"><i class="fas fa-envelope"></i></button>
+                    </div>
+                    <div class=" pl-0 pr-0 d-flex justify-content-between">
+                        <button id="backbutton" class="btn uibtn" onclick="javascript:GoBackOneStep()"><i class="fas fa-undo"></i></button>
+                    </div>
+                    <div class=" pl-0 pr-0 d-flex justify-content-between">
+                        <button class="btn uibtn" onclick="javascript:userNavigation.gotoprofile()"><i class="fas fa-home"></i></button>
+                    </div>
+                    <div class="pl-2 pr-2 d-flex justify-content-between">
+                        <input id="CoordinateEditor" onblur="enteredNewCoord();" class="coordeditor form-control btn coordinput" style="color: #ff853e" value="::">
+                    </div>
+                    <div class="pl-0 pr-0 d-flex justify-content-between">
+                        <button type="button" id="statusbtn" class="btn statusbtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Connection status"><i class="fas fa-satellite"></i></button>
+                    </div>
+                    <div class="pl-0 pr-0 d-flex justify-content-between">
+                        <button onclick="javascript:alert('Right click on the map to add a new post.')" type="button" id="newpostbtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-edit"></i></img></button>
+                    </div>
+                    <div class="mr-3 pl-0 d-flex justify-content-between">
+                        <button onclick="javascript:zoomClick()" type="button" id="zoombtn" class="btn uibtn" data-html="true" data-toggle="tooltip" data-placement="top" title="Create a new post"><i class="fas fa-search-plus"></i> 30</button>
+                    </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 
@@ -923,7 +1005,7 @@ background: #383838;
 }
 
 .commsview-open {
-    width:calc(30rem);
+    width:calc(25rem);
     transition: 0.3s;
 }
 
@@ -1043,40 +1125,61 @@ background: #383838;
     }
 
     function hideshowmsgs() {
-        if ($('#CommsView').hasClass("hidden")) {
-            $('#CommsView').removeClass("hidden")
+        //$('#commsDraw').removeClass("slideCommsOpen")
+        //$('#commsDraw').removeClass("slideCommsClose")
+        if ($('#commsDraw').hasClass("slideCommsOpen")) {
+            $('#commsDraw').removeClass("slideCommsOpen")
+            $('#commsDraw').addClass("slideCommsClose")
+            $('#binst-canvas-drawer').addClass("slideCanvasClosed")
+            $('#binst-canvas-drawer').removeClass("slideCanvasOpen")
+            $('#bottombarbkg').removeClass("bottombarBkg")
+            $('#bottombarbkg').addClass("bottombarNoBkg")
+            //$('#commsDraw').removeClass("col-md-5")
         } else {
-            $('#CommsView').addClass("hidden")
+            $('#commsDraw').removeClass("slideCommsClose")
+            $('#commsDraw').addClass("slideCommsOpen")
+            $('#binst-canvas-drawer').removeClass("slideCanvasClosed")
+            $('#binst-canvas-drawer').addClass("slideCanvasOpen")
+            $('#bottombarbkg').addClass("bottombarBkg")
+            $('#bottombarbkg').removeClass("bottombarNoBkg")
+            //$('#commsDraw').addClass("col-md-5")
+            comms.vm.updateConvo(-1)
         }
+        // if ($('#CommsView').hasClass("hidden")) {
+        //     $('#CommsView').removeClass("hidden")
+        // } else {
+        //     $('#CommsView').addClass("hidden")
+        //     comms.vm.updateConvo(-1)
+        // }
     }
 
     //# sourceURL=Navigatortemplate3.js
 </script>
-<div id="Updates"
-     style="position:absolute;
-    right:0;
-    bottom:0;
-    border-radius:10px;
-    background-image: linear-gradient(to left, #000000ff ,#000000ff,#000000ff,#050505cc, #22222277);"
-     class="hidden updates-open pl-1 pr-1 text-light"
->
-    <div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">Updates</div>
-    <div id="Updatelistholder" class="ml-2 mr-2" style="max-height:80vh;overflow-y:scroll;">
-        <div id="Updatelist" class="list-group text-light" >
-        </div>
-    </div>
-</div>
+<!--<div id="Updates"-->
+<!--     style="position:absolute;-->
+<!--    right:0;-->
+<!--    bottom:0;-->
+<!--    border-radius:10px;-->
+<!--    background-image: linear-gradient(to left, #000000ff ,#000000ff,#000000ff,#050505cc, #22222277);"-->
+<!--     class="updates-open pl-1 pr-1 text-light"-->
+<!--&gt;-->
+<!--    <div class="col-md-12 text-center pt-2 pb-2" style="border-bottom:1px solid #ffffff77">Updates</div>-->
+<!--    <div id="Updatelistholder" class="ml-2 mr-2" style="max-height:80vh;overflow-y:scroll;">-->
+<!--        <div id="Updatelist" class="list-group text-light" >-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
-<div id="CommsView"
-     style="position:absolute;
-    left:3vh;
-    bottom:8vh;
-    border-radius:5px;
-    background-image: linear-gradient(to right, #222222cc ,#050505cc,#000000cc,#050505cc, #222222cc);
-    border:3px solid #777777ff;
-    overflow-y:none;
-"
-     class="hidden thinscroll commsview-open pl-1 pr-1 mb-1 mt-1 text-light"
->
+<!--<div id="CommsView"-->
+<!--     style="position:absolute;-->
+<!--    left:0vh;-->
+<!--    bottom:0vh;-->
+<!--    border-radius:5px;-->
+<!--    background-image: linear-gradient(to right, #222222cc ,#050505cc,#000000cc,#050505cc, #222222cc);-->
+<!--    border:3px solid #777777ff;-->
+<!--    overflow-y:none;-->
+<!--"-->
+<!--     class="hidden thinscroll commsview-open pl-1 pr-1 mb-1 mt-1 text-light"-->
+<!--&gt;-->
 
-</div>
+<!--</div>-->

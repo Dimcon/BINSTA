@@ -38,7 +38,7 @@ MAX_CONTENT_PATH = 100000000
 
 SEND_FILE_MAX_AGE_DEFAULT = 3600
 
-# Email confiuration
+# Email configuration
 MAIL_SERVER = '127.0.0.1'
 MAIL_PORT = 0
 MAIL_USE_TLS = True

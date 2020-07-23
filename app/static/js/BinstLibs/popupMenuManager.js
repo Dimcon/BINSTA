@@ -36,12 +36,24 @@ class PopupMenuManager {
 
     addPlainButton(text, textStyle, onPress, data1, data2) {
         let button = {}
+        button.type = "button"
         button.text = text
         button.textStyle = textStyle
         button.onPress = onPress
         button.data1 = data1
         button.data2 = data2
         this.currentMenuOpts["items"].push(button)
+    }
+
+    addHeading(text, textStyle, onPress, data1, data2) {
+        let heading = {}
+        heading.type = "heading"
+        heading.text = text
+        heading.textStyle = textStyle
+        heading.onPress = onPress
+        heading.data1 = data1
+        heading.data2 = data2
+        this.currentMenuOpts["items"].push(heading)
     }
 
     endMenu() {
@@ -74,8 +86,6 @@ class PopupMenuManager {
         let HeadingMetrics = PIXI.TextMetrics.measureText(menu.heading, headingstyle)
         let graphics = new PIXI.Graphics()
 
-
-
         let yPos = 0
 
         HeadingText.position.x = (dimensions[0]/2) - (HeadingMetrics.width/2)
@@ -85,52 +95,62 @@ class PopupMenuManager {
 
         yPos += HeadingText.position.y + HeadingMetrics.height + mainpadding[1] / 2
 
-        for (let btns in menu.items) {
-            let btn = menu.items[btns]
-            let btnsprite = new PIXI.Sprite()
-            let btngraphics = new PIXI.Graphics()
+        for (let itemIndex in menu.items) {
+            let item = menu.items[itemIndex]
+            let itemSprite = new PIXI.Sprite()
+            let itemGraphics = new PIXI.Graphics()
+            let textStyle = ""
+            let itemText = ""
+            let itemMetrics = ""
+            if (item.type === "button") {
+                textStyle = new PIXI.TextStyle({
+                    fontFamily: NameFont,
+                    fontSize: 24,
+                    fontWeight: 'normal',
+                    fill: BodyColor,
+                    stroke: '#d8d8d8',
+                    strokeThickness: 0,
+                    wordWrap: true,
+                    wordWrapWidth: dimensions[0] - (2 * mainpadding[0]),
+                    breakWords: true,
+                    align: 'Justified'
+                })
+                itemText = new PIXI.Text(item.text, textStyle);
+                itemMetrics = PIXI.TextMetrics.measureText(menu.heading, textStyle)
+                itemText.position.x = mainpadding[0]
+                itemText.position.y = yPos + mainpadding[1] / 2
+            } else if (item.type === "heading") {
+                textStyle = headingstyle
+                itemText = new PIXI.Text(item.text, textStyle);
+                itemMetrics = PIXI.TextMetrics.measureText(menu.heading, textStyle)
+                itemText.position.x = (dimensions[0] / 2) - (itemMetrics.width / 2)
+                itemText.position.y = yPos + mainpadding[1] / 2
+            }
 
-            let btnstyle = new PIXI.TextStyle({
-                fontFamily: NameFont,
-                fontSize: 24,
-                fontWeight: 'normal',
-                fill: BodyColor,
-                stroke: '#d8d8d8',
-                strokeThickness: 0,
-                wordWrap: true,
-                wordWrapWidth: dimensions[0] - (2* mainpadding[0]),
-                breakWords:true,
-                align:'Justified'
+            itemGraphics.lineStyle(2, 0x222222, 1);
+            itemGraphics.beginFill(0x383865);
+            itemGraphics.drawRoundedRect(0, yPos, dimensions[0], mainpadding[1] + itemMetrics.height,8);
+            itemGraphics.endFill();
+            itemGraphics.alpha = 0
+
+            itemGraphics.interactive = true
+            itemGraphics.on('click', function() {
+
             })
-            let btnText = new PIXI.Text(btn.text, btnstyle);
-            let btnMetrics = PIXI.TextMetrics.measureText(menu.heading, btnstyle)
-
-            btnText.position.x = mainpadding[0]
-            btnText.position.y = yPos + mainpadding[1]/2
-
-            btngraphics.lineStyle(2, 0x222222, 1);
-            btngraphics.beginFill(0x383865);
-            btngraphics.drawRoundedRect(0, yPos, dimensions[0], mainpadding[1] + btnMetrics.height,8);
-            btngraphics.endFill();
-            btngraphics.alpha = 0
-
-            btngraphics.interactive = true
-            btngraphics.on('click', function() {
-                btn.onPress(btn.data1,btn.data2)
+            itemGraphics.on('mousedown', function() {
+                itemGraphics.alpha = 1
             })
-            btngraphics.on('mousedown', function() {
-                btngraphics.alpha = 1
-            })
-            btngraphics.on('mouseup', function() {
-                btngraphics.alpha = 0
+            itemGraphics.on('mouseup', function() {
+                itemGraphics.alpha = 0
+                item.onPress(item.data1, item.data2)
             })
 
-            yPos += mainpadding[1] + btnMetrics.height + spacing
-            btnsprite.addChild(btngraphics)
-            btnsprite.addChild(btnText)
-            menu.items[btns].sprite = btnsprite
-            menu.items[btns].graphics = btngraphics
-            sprite.addChild(btnsprite)
+            yPos += mainpadding[1] + itemMetrics.height + spacing
+            itemSprite.addChild(itemGraphics)
+            itemSprite.addChild(itemText)
+            menu.items[itemIndex].sprite = itemSprite
+            menu.items[itemIndex].graphics = itemGraphics
+            sprite.addChild(itemSprite)
         }
 
         graphics.lineStyle(2, 0x222222, 1);

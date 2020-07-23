@@ -6,6 +6,7 @@
             "Position": Position.x + ";" + Position.y,
             "CreateDate": new Date().toISOString()
         })
+
     }
     let htmlmodal = `
         
@@ -113,6 +114,7 @@
                             "Position": wposition.x + ";" + wposition.y,
                             "CreateDate": new Date().toISOString()
                         })
+                        sendUpdateToFriends(wposition, " has posted at ", "srth rs")
                         $('#mymodal').modal("hide")
                     }
                 })

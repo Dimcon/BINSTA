@@ -2,6 +2,7 @@ import threading, time, datetime, math
 from flask import jsonify
 import flask
 from app import *
+from app.betterinstagram import *
 from helpers import *
 import json
 from Gridhelpers import *
@@ -63,12 +64,17 @@ def pushFeedUpdate(position,zoom,action,message,updateimageURL,RelUser):
 		'relUserName': RelUser.name,
 		'relUserImageID': profileimageid
 	}
+	friends = getfriends(current_user.id)
+	for f in friends:
+		pushUpdateToUser(data,f)
+	
+def pushUpdateToUser(data, user):
 	getRedisLock("pushFeedUpdateToRedis")
 	try:
-		userkey = "User:Summary:{}".format(current_user.email)
+		userkey = "User:Summary:{}".format(user.email)
 		UserUpdates = redis_store.hget(userkey, 'UserUpdates')
-		if len(UserUpdates) == 0:
-			newsummary = createNewUserSummary(current_user.email)
+		if not UserUpdates or len(UserUpdates) == 0:
+			newsummary = createNewUserSummary(user.email)
 			redis_store.hmset(userkey, newsummary)
 			UserUpdates = redis_store.hget(userkey, 'UserUpdates')
 		if len(UserUpdates) > 0:
@@ -77,7 +83,8 @@ def pushFeedUpdate(position,zoom,action,message,updateimageURL,RelUser):
 			userupdates = []
 		userupdates.append(data)
 		redis_store.hset(userkey, 'UserUpdates', json.dumps(userupdates))
-	finally:releaseRedisLock()
+	finally:
+		releaseRedisLock()
 
 def getFeedUpdates():
 	userkey = "User:Summary:{}".format(current_user.email)
@@ -86,6 +93,7 @@ def getFeedUpdates():
 	if not len(userupdates) == 0:
 		updates = json.loads(userupdates)
 	#TODO: Add remove mechanism for old updates
+	# TODO: Add priority system
 	return updates
 
 

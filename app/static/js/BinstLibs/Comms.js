@@ -5,6 +5,15 @@ function isEmailInFriendList(email) {
     return friendEmails.indexOf(email) >= 0
 }
 
+function sendUpdateToFriends(position, action, message) {
+    socket.emit('NetSendUpdate', {
+        posx: position.x,
+        posy: position.y,
+        message: message,
+        action: action
+    })
+}
+
 var friendEmails = []
 class Comms {
     constructor() {
@@ -13,9 +22,10 @@ class Comms {
             this.setupVue()
         })
         this.lastUpdateTime = 0
-        this.waitingForConvoWithID = 0
-        this.FoundConvoWithID = false
-        //setInterval(this.sendPoll,3000)
+        this.newChatConvoID = 0
+        this.bFoundNewChatConvo = false
+
+        setInterval(this.sendPoll,3000)
         // Use this for quickly determining if somebody is a friend
     }
 
@@ -29,8 +39,9 @@ class Comms {
 
     setupSocketCallbacks() {
         socket.on('CommsInitResult', (fromserver) => {
-            this.vm.convos = comms.parseConvos(fromserver.convos)
-            this.vm.friends = comms.parseFriends(fromserver.friends)
+            comms.vm.convos = comms.parseConvos(fromserver.convos)
+            comms.vm.friends = comms.parseFriends(fromserver.friends)
+            comms.lastUpdateTime = fromserver.lastUpdatedAt
         });
         socket.on('CommsPollResult',(fromserver) => {
             this.lastUpdateTime = fromserver.UpdatedAt
@@ -41,21 +52,30 @@ class Comms {
                comms.vm.convos.push(convos[i])
             }
 
-            if (this.FoundConvoWithID) {
-                this.vm.updateConvo(this.waitingForConvoWithID)
-                this.waitingForConvoWithID = 0
-                this.FoundConvoWithID = false
+            if (this.bFoundNewChatConvo) {
+                this.vm.updateConvo(this.newChatConvoID)
+                this.newChatConvoID = 0
+                this.bFoundNewChatConvo = false
             }
 
             for (let i = 0;i < fromserver.NewMessages.length;i++) {
                 let msg = fromserver.NewMessages[i]
                 let convo = comms.getConvoFromID(msg.convoid)
                 if (!convo) {
-                    console.err("Got message without convo: " + msg.message)
+                    console.error("Got message without convo: " + msg.message)
                     return
                 }
+                msg.hasBeenRead = msg.recievedlist.indexOf(useremail) !== -1
                 convo.messages.push(msg)
+                if (!msg.hasBeenRead) {
+                    convo.unreadCount += 1
+                    if (!isNull(comms.vm.getShownConvo()) && comms.vm.getShownConvo().id === convo.id) {
+                        comms.markConvoRead(convo)
+                    }
+                }
+
             }
+            comms.updateTotalUnreadCount()
         })
         socket.emit('CommsInit',
         {
@@ -66,7 +86,7 @@ class Comms {
             // The reason for this is we need a conversation ID before we can send a message
             //      Start a new conversation doesn't necessarily get the ID straight away
             //      And users start a convo by sending a message so ... catch 22?
-            this.waitingForConvoWithID = fromserver.convoid
+            this.newChatConvoID = fromserver.convoid
             socket.emit('SendMessage', {
                 convoid: fromserver.convoid,
                 msg: comms.vm.textinput
@@ -87,6 +107,18 @@ class Comms {
 //            convoid:   "1",
 //            users: ['daimonsewell@gmail.com']
 //        });
+    }
+
+    updateTotalUnreadCount() {
+        let convos = comms.vm.convos
+        let totalUnread = 0;
+        for (let c in convos) {
+            totalUnread += convos[c].unreadCount
+        }
+        comms.vm.totalUnreadCount = totalUnread
+        $('#msgbutton').removeAttr('data-badge');
+        if (totalUnread > 0)
+            $('#msgbutton').attr('data-badge', totalUnread);
     }
 
     parseFriends(friends) {
@@ -117,19 +149,27 @@ class Comms {
     parseConvos(convos) {
         for (let c = 0;c < convos.length;c++) {
             let convo = convos[c]
-            convo.scrollheight = -1
-            convo.unreadCount = 2
-            convo.isactive = false
-            if (this.waitingForConvoWithID > 0 && this.waitingForConvoWithID == convo.id) {
-                this.FoundConvoWithID = true
+            convo.unreadCount = 0
+            for (let mindex in convo.messages) {
+                let msg = convo.messages[mindex]
+                msg.hasBeenRead = msg.recievedlist.indexOf(useremail) !== -1
+                if (!msg.hasBeenRead) {
+                    convo.unreadCount += 1
+                }
             }
+            convo.scrollheight = -1
+            convo.isactive = false
+            if (this.newChatConvoID > 0 && this.newChatConvoID === convo.id) {
+                this.bFoundNewChatConvo = true
+            }
+            // Default value. A facade convo is one that shows the chat but has no messages
             convo.isFacade = false
             if (convo.profileimageid > 0) {
                 convo.imgsrc = "/getimageid-" + convo.profileimageid
             } else {
                 convo.imgsrc = "static/images/cat.png"
             }
-            if (convo.users.length == 1) {
+            if (convo.users.length === 1) {
                 if (convo.users[0].profileimageid > 0) {
                     convo.imgsrc = "/getimageid-" + convo.users[0].profileimageid
                 } else {
@@ -140,34 +180,109 @@ class Comms {
         return convos
     }
 
+    markMessagesRead(msgIDList) {
+        socket.emit('SendMessage', {
+            msgidlist: msgIDList.join(";"),
+            markread: true
+        }, () => {
+        });
+    }
+
+    markConvoRead(convo) {
+        let msgids = []
+        for (let mindex in convo.messages) {
+            let msg = convo.messages[mindex]
+            if (!msg.hasBeenRead) {
+                msgids.push(msg.messageID)
+                msg.recievedlist += ";" + useremail
+                msg.hasBeenRead = true
+            }
+        }
+        convo.unreadCount = 0
+        this.markMessagesRead(msgids)
+        comms.updateTotalUnreadCount()
+    }
+
     setupVue() {
         Vue.component("convo-title-display", {
             props: ["convo"],
             name: 'convo-title-display',
             template:
-                "<div class='pl-2 pr-2' v-bind:class='{ \"activemsgbkg\": convo.isactive, \"inactivemsgbkg\": !convo.isactive }'>\
-                    <img :src='convo.imgsrc'   \
-                        v-on:click='$emit(\"childupdateconvo\",convo.id)' \
-                        style='border-radius:10vw' \
-                        v-bind:class='{ \"activemsg\": convo.isactive }'\
-                        class='clickable w-75 ml-2 mr-2 mt-1 mb-1'>\
-                     <span v-if='convo.unreadCount > 0' class='overlay hasnotif' style='float: right;' :data-badge='convo.unreadCount'/>\
-                </div>"
+                `<div class='pl-2 pr-2 notifholder' v-bind:class='{ "activemsgbkg": convo.isactive, "inactivemsgbkg": !convo.isactive }'>
+                    <img :src='convo.imgsrc'   
+                        v-on:click='$emit("childupdateconvo",convo.id)' 
+                        style='border-radius:10vw' 
+                        v-bind:class='{ "activemsg": convo.isactive }'
+                        class='clickable w-75 ml-2 mr-2 mt-1 mb-1'>
+                     <span v-if='convo.unreadCount > 0' class='overlay hasnotif' style='' :data-badge='convo.unreadCount'/>
+                </div>`
         });
         Vue.component("convo-display", {
             props: ["convo", "vuseremail"],
             name: 'convo-display',
+            methods: {
+                formatTime: function (times) {
+                    var d = new Date();
+                    d.setHours(d.getHours() - 2);
+                    if (moment(times).isBefore(d)) {
+                        return moment(times).calendar(null, {
+                            sameDay: '[Today at] h:mma',
+                            nextDay: '[Tomorrow at]h:mma',
+                            nextWeek: 'dddd',
+                            lastDay: '[Yesterday at] h:mma',
+                            lastWeek: '[Last] dddd [ at ] h:mma',
+                            sameElse: 'DD/MM/YYYY [ at ] h:mma'
+                        });
+                    }
+                    return moment(times).fromNow() + " at " + moment(times).format("h:mma");;
+                    //calendar(null, {
+                    //    sameDay: '[Today at] h:mma',
+                    //    nextDay: '[Tomorrow at]h:mma',
+                    //    nextWeek: 'dddd',
+                    //    lastDay: '[Yesterday at] h:mma',
+                    //    lastWeek: '[Last] dddd [ at ] h:mma',
+                    //    sameElse: 'DD/MM/YYYY [ at ] h:mma'
+                    //});
+                }
+            },
             template:
-            " <div>\
-            <div v-for='m in convo.messages' >\
-                  <div v-if='m.useremail == vuseremail' class='list-group-item msg text-light bg-dark pt-2 pb-2 pl-3 mt-2 mb-1 ml-5 mr-1'>\
-                      {{ m.message }}\
-                  </div>\
-                  <div v-else class='list-group-item msg text-light text-align-right bg-dark  pt-2 pb-2 pl-3 mt-2 mb-1 ml-1 mr-5'>\
-                      {{ m.message }}\
-                  </div>\
-              </div>\
-              </div>"
+            `<div class="thinscroll" style="box-sizing: border-box;
+    display: flex;
+    flex-direction: column-reverse;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    position: absolute;
+    top: 0;
+    transition: background .3s ease-out .1s;
+    width: 100%;
+    z-index: 100;">
+            <div id="msglist" class=" msglist  list-group text-light"
+            style="">
+            <div v-for='(m, index) in convo.messages' >
+                  <div v-if='index > 0'>
+                      <div v-if='convo.messages[index - 1].useremail !== m.useremail' class="pt-2">
+                      </div>
+                  </div>
+                  <div v-if='m.useremail == vuseremail' class='d-flex justify-content-end' >
+                      <div class="msg text-light px-3 py-2 mt-1 ml-5 mr-3 d-flex justify-content-between flex-wrap" style="background: #006356!important;">
+                         {{ m.message }}
+                         <small class="m-1 ml-2 text-secondary text-right" style="color: #00ab94!important;">
+                         {{ formatTime(m.time) }}
+                         </small>
+                      </div>
+                  </div>
+                  <div v-else class='d-flex justify-content-start'>
+                      <div class="msg text-light px-3 py-2 mt-1 ml-3 mr-5  d-flex justify-content-between flex-wrap" style="background: #914b00!important;">
+                        {{ m.message }}
+                        <small class="m-1 ml-2 text-secondary text-right" style="color: rgb(241, 157, 68)!important;">
+                         {{ formatTime(m.time) }}
+                         </small>
+                      </div>
+                  </div>
+            </div>
+            </div>
+            </div>`
         });
         this.vm = new Vue({
            el: '#CommsViewlistholder',
@@ -176,6 +291,7 @@ class Comms {
              vuseremail:useremail,
              message: 'Hello Vue!',
              convos: [],
+             totalUnreadCount: 0,
              friends: [],
              showingConvo: 0,
              textinput: "",
@@ -231,9 +347,14 @@ class Comms {
                     if (this.showingConvo == -2 && cid != -2) {
                         delete this.facadeConvo
                     }
+                    if (cid == -1) {
+                        this.showingConvo = cid
+                        return
+                    }
                     this.showingConvo = cid
                     let newconvo = this.getShownConvo()
                     newconvo.isactive = true
+                    comms.markConvoRead(newconvo)
                     newconvo.unreadCount = 0
                     if (newconvo.scrollheight > -1) $('#msglist').scrollTop(newconvo.scrollheight)
                 },

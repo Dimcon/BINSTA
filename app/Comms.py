@@ -62,13 +62,14 @@ def profanityCheck(sinput):
 
 @socketio.on('CommsInit', namespace='/navengine')
 def ChatInit(data):
-	convos = Userxconversation.query\
+	uxconvos = Userxconversation.query\
 		.filter_by(userid=current_user.id,joinstatus="1")\
 		.order_by(Userxconversation.userjoindate.desc())\
 		.all()
 	#TODO: Need to make this return a limited amount of messages on first load.
 	data = {}
-	data['convos'] = getMessagesAndUsersFromConvos(convos)
+	data['convos'] = getMessagesAndUsersFromConvos(uxconvos)
+	data['lastUpdatedAt'] = (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
 	data['friends'] = getUsersFriendListDict()
 	emit('CommsInitResult', data)
 	# Return data in socket push
@@ -99,14 +100,14 @@ def getMessagesAndUsersFromConvos(convos, userlist="-1"):
 	resultConvos = []
 	if userlist == "-1":
 		userlist = []
-	for convo in convos:
-		converse = dbget(Conversation, id=convo.conversationid)
+	for uxconvo in convos:
+		converse = dbget(Conversation, id=uxconvo.conversationid)
 		c = {}
 		c['name'] = converse.name
 		c['privacy'] = converse.privacy
 		c['id'] = converse.id
 		c['profileimageid'] = converse.profileimageid
-		tmpusers = query(User).filter((Userxconversation.conversationid == convo.conversationid) \
+		tmpusers = query(User).filter((Userxconversation.conversationid == uxconvo.conversationid) \
 									  & (User.id == Userxconversation.userid)).all()
 		users = []
 		cusers = []
@@ -130,6 +131,7 @@ def getMessagesAndUsersFromConvos(convos, userlist="-1"):
 		c['messages'] = []
 		for m in messages:
 			msg = {
+				"messageID":m.id,
 				"fromuserid": m.fromuserid,
 				"time": str(m.time),
 				"fileids": m.fileids,
@@ -158,7 +160,7 @@ def CommsPoll(data):
 	if float(lastUpdateTime) == 0:
 		dt = datetime.datetime.now()
 	else:
-		dt = datetime.datetime.fromtimestamp(float(lastUpdateTime))
+		dt = datetime.datetime.utcfromtimestamp(float(lastUpdateTime))
 	soutd(dt,4)
 	timestamp = (datetime.datetime.now() - datetime.datetime(1970, 1, 1)).total_seconds()
 	soutd(timestamp, 4)
@@ -271,16 +273,20 @@ def hasChangeConvoAccess(User,convoid):
 	return getConvoPermission(User, convoid) != 2
 
 def getUserEmailssFromConvo(convoid):
-	uxcs = dbgetlist(Userxconversation,conversationid=int(convoid))
-	usrs = []
-	for u in uxcs:
-		usr = dbget(User,id=u.userid)
-		if usr is not None:
-			usrs.append(usr.email)
-	return usrs
+	users = query(User).filter((Userxconversation.conversationid == int(convoid))
+	                           & (User.id == Userxconversation.userid)).all()
+	return [user.email for user in users]
 
 @socketio.on('SendMessage', namespace='/navengine')
 def SendMessage(data):
+	if "markread" in data:
+		msgids = data["msgidlist"].split(";")
+		for msgid in msgids:
+			if msgid != '':
+				cmsg = dbget(Cmessage, id=int(msgid))
+				cmsg.recievedlist = ";".join(cmsg.recievedlist.split(";") + [current_user.email])
+		dbcommit()
+		return ""
 	convoid = int(data["convoid"])
 	cmsg = Cmessage(
 		conversationid=convoid,
@@ -288,7 +294,7 @@ def SendMessage(data):
 		time=datetime.datetime.now(),
 		fileids="",
 		sentlist=";".join(getUserEmailssFromConvo(convoid)),
-		recievedlist="",
+		recievedlist=current_user.email,
 		message=data["msg"]
 	)
 	dbputandcommit(cmsg)
