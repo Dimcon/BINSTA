@@ -14,7 +14,7 @@ flask-socketio==3.0.2
 flask-weasyprint==0.5
 flask-whooshalchemy==0.56
 flask-wtf==0.10.2
-flask==0.10.1
+flask==1.0
 flipflop==1.0
 gunicorn==19.1.1
 gevent==1.3.7
